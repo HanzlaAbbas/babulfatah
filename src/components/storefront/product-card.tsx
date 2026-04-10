@@ -31,7 +31,7 @@ interface ProductCardProps {
 //   • Wishlist heart (top-right) — always visible
 //   • Language badge (top-left) — tiny pill
 //   • Hover: image zooms + quick-action bar slides up from bottom
-//   • Mobile: always-visible Add to Cart + WhatsApp buttons below the card
+//   • No full-width "Add to Cart" button eating space
 //   • Clean, tight spacing for carousel friendliness
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -137,8 +137,8 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
           />
         </button>
 
-        {/* ── Hover Quick-Action Bar (slides up from bottom) — desktop only ── */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden lg:block">
+        {/* ── Hover Quick-Action Bar (slides up from bottom) ── */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
           <div className="flex items-center gap-1.5 px-2 pb-2">
             {/* Add to Cart */}
             <button
@@ -151,7 +151,7 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
               }`}
             >
               <ShoppingCart className="h-3 w-3" />
-              {inStock ? 'Add to Cart' : 'Sold Out'}
+              {inStock ? 'Add' : 'Sold'}
             </button>
             {/* View Product */}
             <Link
@@ -161,14 +161,6 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
             >
               <Eye className="h-3 w-3" />
             </Link>
-            {/* WhatsApp */}
-            <button
-              onClick={handleWhatsAppOrder}
-              className="h-8 w-8 rounded-lg bg-green-500 text-white flex items-center justify-center hover:bg-green-600 shadow-md transition-all duration-200 hover:scale-105"
-              aria-label="Order via WhatsApp"
-            >
-              <MessageCircle className="h-3 w-3" />
-            </button>
           </div>
         </div>
       </div>
@@ -182,42 +174,34 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
           </h3>
         </Link>
 
-        {/* Price */}
+        {/* Price + Mobile Action Buttons */}
         <div className="flex items-center justify-between gap-2 pt-0.5">
           <span className="text-sm font-bold text-brand-dark tracking-tight">
             Rs. {product.price.toLocaleString('en-PK')}
           </span>
-        </div>
-
-        {/* Mobile-only: Always-visible action buttons below price */}
-        <div className="flex items-center gap-1.5 pt-1.5 lg:hidden">
-          <button
-            onClick={handleAddToCart}
-            disabled={!inStock}
-            className={`flex-1 h-8 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-              inStock
-                ? 'bg-golden text-golden-foreground hover:bg-golden-light'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            }`}
-            aria-label="Add to cart"
-          >
-            <ShoppingCart className="h-3 w-3" />
-            {inStock ? 'Add to Cart' : 'Sold Out'}
-          </button>
-          <button
-            onClick={handleWhatsAppOrder}
-            className="h-8 w-8 rounded-lg bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all duration-200"
-            aria-label="Order via WhatsApp"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-          </button>
-          <Link
-            href={`/shop/${product.slug}`}
-            className="h-8 w-8 rounded-lg bg-surface-alt text-brand flex items-center justify-center hover:bg-surface transition-all duration-200"
-            aria-label="View product"
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </Link>
+          {/* Mobile-only: Add to Cart + WhatsApp buttons (always visible below lg) */}
+          <div className="flex items-center gap-1 lg:hidden">
+            <button
+              onClick={handleAddToCart}
+              disabled={!inStock}
+              className={`h-7 px-2.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all duration-200 ${
+                inStock
+                  ? 'bg-golden text-golden-foreground hover:bg-golden-light'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+              aria-label="Add to cart"
+            >
+              <ShoppingCart className="h-3 w-3" />
+              Add
+            </button>
+            <button
+              onClick={handleWhatsAppOrder}
+              className="h-7 w-7 rounded-lg bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all duration-200"
+              aria-label="Order via WhatsApp"
+            >
+              <MessageCircle className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

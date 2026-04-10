@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { HeroSlider } from '@/components/storefront/hero-slider';
 import { BenefitsBar } from '@/components/storefront/benefits-bar';
+import { BestSellersGrid } from '@/components/storefront/best-sellers-grid';
 import { FeaturedProductsTabs } from '@/components/storefront/featured-products-tabs';
 import { CategoryShowcase } from '@/components/storefront/category-showcase';
 import { FeaturedCollection } from '@/components/storefront/featured-collection';
@@ -83,6 +84,21 @@ export default async function HomePage() {
     showcaseCategoriesPromise,
     seerahCategoryPromise,
   ]);
+
+  // 4. Fetch best sellers (highest stock, in-stock products)
+  const bestSellers = await db.product.findMany({
+    where: { stock: { gt: 0 } },
+    take: 8,
+    orderBy: [
+      { stock: 'desc' },
+      { createdAt: 'desc' },
+    ],
+    include: {
+      images: { take: 1, orderBy: { order: 'asc' } },
+      author: true,
+      category: true,
+    },
+  });
 
   // ── Process tab data ──
   const tabCategories: TabCategory[] = tabData.map((td) => ({
@@ -234,7 +250,32 @@ export default async function HomePage() {
       <BenefitsBar />
 
       {/* ═══════════════════════════════════════════════════════════
-          3. Featured Products with Category Tabs (carousel)
+          3. Best Sellers Grid
+         ═══════════════════════════════════════════════════════════ */}
+      {bestSellers.length > 0 && (
+        <BestSellersGrid
+          products={bestSellers.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+            price: p.price,
+            stock: p.stock,
+            language: p.language,
+            images: p.images.map((img) => ({
+              id: img.id,
+              url: img.url,
+              altText: img.altText,
+            })),
+            category: { id: p.category.id, name: p.category.name },
+            author: p.author
+              ? { id: p.author.id, name: p.author.name }
+              : null,
+          }))}
+        />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          4. Featured Products with Category Tabs (carousel)
          ═══════════════════════════════════════════════════════════ */}
       {filteredTabCategories.length > 0 && (
         <FeaturedProductsTabs categories={filteredTabCategories} />

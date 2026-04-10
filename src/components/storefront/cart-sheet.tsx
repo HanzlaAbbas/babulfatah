@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Minus, Plus, Trash2, BookOpen, MessageCircle, AlertTriangle, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, BookOpen, MessageCircle, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -35,9 +35,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
         `• ${item.title} x${item.quantity} — Rs. ${(item.price * item.quantity).toLocaleString('en-PK')}`
     );
     const subtotal = totalPrice().toLocaleString('en-PK');
-    const total = totalPrice();
-    const shippingNote = total >= 5000 ? '(FREE Delivery!)' : '(Shipping charges apply)';
-    const message = `Assalamu Alaikum! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: Rs. ${subtotal}\n${shippingNote}\n\nPlease confirm availability and total amount. JazakAllah!`;
+    const message = `Assalamu Alaikum! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: Rs. ${subtotal}`;
     return `https://wa.me/+923265903300?text=${encodeURIComponent(message)}`;
   };
 
@@ -64,7 +62,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-16">
               <div className="h-20 w-20 rounded-full bg-surface-alt flex items-center justify-center">
-                <ShoppingBag className="h-9 w-9 text-muted-foreground/40" />
+                <BookOpen className="h-9 w-9 text-muted-foreground/40" />
               </div>
               <div className="space-y-1.5">
                 <p className="font-medium text-foreground">Your cart is empty</p>
@@ -166,52 +164,37 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
         {items.length > 0 && (
           <>
             <Separator />
-            <SheetFooter className="px-6 py-5 flex-col gap-3 sm:flex-col">
-              {/* Free delivery notice */}
-              {totalPrice() < 5000 && (
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Add Rs. {(5000 - totalPrice()).toLocaleString('en-PK')} more for <span className="font-semibold text-golden-dark">FREE Delivery</span>!
-                </p>
-              )}
-              {totalPrice() >= 5000 && (
-                <p className="text-[11px] text-center text-green-600 font-semibold">
-                  You qualify for FREE Delivery!
-                </p>
-              )}
-
+            <SheetFooter className="px-6 py-5 flex-col gap-4 sm:flex-col">
               <div className="flex items-center justify-between w-full">
                 <span className="text-sm text-muted-foreground">Subtotal</span>
                 <span className="text-lg font-bold text-foreground">
                   Rs. {totalPrice().toLocaleString('en-PK')}
                 </span>
               </div>
-
-              {/* Continue Shopping — prominent */}
               <Button
                 variant="outline"
-                className="w-full h-11 rounded-xl border-brand/20 text-brand hover:bg-brand/5 font-medium text-sm transition-colors"
+                className="w-full h-10 rounded-xl border-brand/20 text-brand hover:bg-brand/5 font-medium text-sm transition-colors"
                 onClick={() => onOpenChange(false)}
                 asChild
               >
                 <Link href="/shop">Continue Shopping</Link>
               </Button>
-
-              {/* Proceed to Checkout */}
               <Button
                 className="w-full h-12 rounded-xl bg-golden hover:bg-golden-light text-golden-foreground font-semibold text-sm transition-colors"
                 onClick={handleCheckout}
               >
                 Proceed to Checkout
               </Button>
-
-              {/* Order via WhatsApp — GREEN prominent button */}
+              <p className="text-xs text-muted-foreground text-center">
+                Shipping &amp; taxes calculated at checkout
+              </p>
               <a
                 href={buildWhatsAppUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold text-sm transition-colors"
+                className="flex items-center justify-center gap-1.5 text-xs text-center text-golden hover:text-golden-dark transition-colors mt-1"
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="h-3.5 w-3.5" />
                 Order via WhatsApp
               </a>
             </SheetFooter>

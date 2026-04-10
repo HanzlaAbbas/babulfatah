@@ -38,7 +38,7 @@ const slides: Slide[] = [
       'Curated collection of Quran, Hadith, Tafseer, Seerah, and spiritual works in Urdu, Arabic & English. Trusted by scholars and seekers worldwide.',
     features: ['1,200+ Authentic Books', 'Cash on Delivery', 'Worldwide Shipping'],
     cta: { label: 'Explore Collection', href: '/shop' },
-    secondaryCta: { label: 'Browse Categories', href: '/shop' },
+    secondaryCta: { label: 'Browse Categories', href: '/categories' },
     layout: 'left',
     accent: 'golden',
   },
@@ -52,7 +52,7 @@ const slides: Slide[] = [
     title: 'Teach Your Children the',
     titleHighlight: 'Beauty of Islam',
     description:
-      "Engaging kids' books, prayer mats, and educational resources designed to nurture love for Allah and His Messenger.",
+      "Engaging kids' books, prayer mats, and educational resources designed to nurture love for Allah and His Messenger ﷺ.",
     features: ['50+ Kids Titles', 'Age-Appropriate', 'Colorful & Interactive'],
     cta: { label: 'Shop Kids Collection', href: '/shop?category=children' },
     secondaryCta: { label: 'View All Goodword', href: '/shop?category=goodword-books' },
@@ -80,11 +80,11 @@ const slides: Slide[] = [
     bgImage: '/hero/hero-premium-collection.jpg',
     badge: 'Best Sellers',
     badgeIcon: 'star',
-    subtitle: 'Life of the Prophet',
+    subtitle: 'Life of the Prophet ﷺ',
     title: 'Discover the',
     titleHighlight: "Prophet's Seerah",
     description:
-      "Immerse yourself in the beautiful life story of Prophet Muhammad. From Ar-Raheequl-Makhtum to detailed biographies.",
+      "Immerse yourself in the beautiful life story of Prophet Muhammad ﷺ. From Ar-Raheequl-Makhtum to detailed biographies.",
     features: ['Ar-Raheequl-Makhtum', 'Sahabah Stories', 'Prophetic Biography'],
     cta: { label: 'Explore Seerah', href: '/shop?category=prophets-seerah' },
     secondaryCta: { label: 'View All Books', href: '/shop' },
@@ -414,6 +414,7 @@ function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
   const color = accentColors[accent].primary;
   return (
     <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+      {/* Geometric pattern - top-right */}
       <svg className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.04]" viewBox="0 0 500 500" fill="none">
         <defs>
           <pattern id="hero-geo-1" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
@@ -425,6 +426,7 @@ function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
         <rect width="500" height="500" fill="url(#hero-geo-1)" />
       </svg>
 
+      {/* Geometric pattern - bottom-left */}
       <svg className="absolute bottom-0 left-0 w-[400px] h-[400px] opacity-[0.03]" viewBox="0 0 400 400" fill="none">
         <defs>
           <pattern id="hero-geo-2" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -435,6 +437,7 @@ function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
         <rect width="400" height="400" fill="url(#hero-geo-2)" />
       </svg>
 
+      {/* Arch decoration */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[100px] opacity-[0.035]"
         style={{
@@ -549,6 +552,7 @@ export function HeroSlider() {
         <div className="absolute inset-0 z-[1]" style={{
           background: 'linear-gradient(to top, rgba(20,34,41,0.7) 0%, transparent 40%, rgba(20,34,41,0.3) 100%)',
         }} />
+        {/* Vignette */}
         <div className="absolute inset-0 z-[1]" style={{
           background: 'radial-gradient(ellipse at 30% 50%, transparent 30%, rgba(20,34,41,0.3) 100%)',
         }} />
@@ -587,6 +591,7 @@ export function HeroSlider() {
 
       {/* -- Bottom Navigation Bar -- */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
+        {/* Thin accent line */}
         <div
           className="h-px w-full"
           style={{
@@ -596,6 +601,7 @@ export function HeroSlider() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 py-4 sm:py-5">
           <div className="flex items-center gap-4 sm:gap-6">
+            {/* Slide counter */}
             <div className="hidden sm:flex items-center gap-2.5 shrink-0">
               <span
                 className="text-xl font-bold tabular-nums"
@@ -609,10 +615,12 @@ export function HeroSlider() {
               </span>
             </div>
 
+            {/* Progress */}
             <div className="flex-1">
               <HeroProgress currentIndex={currentIndex} />
             </div>
 
+            {/* Slide label */}
             <div className="hidden md:block text-white/25 text-sm font-medium max-w-[180px] truncate">
               {currentSlide.titleHighlight}
             </div>

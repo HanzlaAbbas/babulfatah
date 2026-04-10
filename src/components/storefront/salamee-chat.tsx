@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2 } from 'lucide-react';
+import { X, Send, Loader2, RefreshCw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
@@ -12,6 +12,8 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  isError?: boolean;
+  retryMessage?: string;
 }
 
 // ─── Salamee AI Chat Widget ───────────────────────────────────────────────────
@@ -77,12 +79,17 @@ export function SalameeChat() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const res = await fetch('/api/salamee', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       const data = await res.json();
 
       if (data.reply) {
@@ -95,22 +102,31 @@ export function SalameeChat() {
           },
         ]);
       } else {
+        const errorMsg = data.error || data.message || "Sorry, I couldn't process that. Please try again.";
         setMessages((prev) => [
           ...prev,
           {
             id: `error-${Date.now()}`,
             role: 'assistant',
-            content: "Sorry, I couldn't process that. Please try again.",
+            content: errorMsg,
+            isError: true,
+            retryMessage: trimmed,
           },
         ]);
       }
-    } catch {
+    } catch (err) {
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+      const errorMsg = isTimeout
+        ? 'Request timed out. The AI assistant took too long to respond. Please try again.'
+        : 'Network error. Please check your connection and try again.';
       setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: 'Network error. Please check your connection and try again.',
+          content: errorMsg,
+          isError: true,
+          retryMessage: trimmed,
         },
       ]);
     } finally {
@@ -126,6 +142,64 @@ export function SalameeChat() {
       }
     },
     [handleSend]
+  );
+
+  const handleRetry = useCallback(
+    (retryMessage: string) => {
+      // Remove the error message from the list
+      setMessages((prev) => prev.filter((m) => m.id !== `error-${m.id}` || !m.isError));
+      // Re-add user message and set input to trigger a fresh send
+      const userMsg: ChatMessage = {
+        id: `user-retry-${Date.now()}`,
+        role: 'user',
+        content: retryMessage,
+      };
+      setMessages((prev) => [...prev.filter((m) => !m.isError), userMsg]);
+      setInput(retryMessage);
+      setIsLoading(true);
+
+      // Direct fetch call to avoid dependency on stale input state
+      (async () => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          const res = await fetch('/api/salamee', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: retryMessage }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          const data = await res.json();
+
+          if (data.reply) {
+            setMessages((prev) => [
+              ...prev.filter((m) => m.id !== userMsg.id || m.role !== 'assistant'),
+              { id: `ai-${Date.now()}`, role: 'assistant', content: data.reply },
+            ]);
+          } else {
+            const errorMsg = data.error || data.message || "Sorry, I couldn't process that. Please try again.";
+            setMessages((prev) => [
+              ...prev,
+              { id: `error-${Date.now()}`, role: 'assistant', content: errorMsg, isError: true, retryMessage: retryMessage },
+            ]);
+          }
+        } catch (err) {
+          const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+          const errorMsg = isTimeout
+            ? 'Request timed out. Please try again.'
+            : 'Network error. Please check your connection and try again.';
+          setMessages((prev) => [
+            ...prev,
+            { id: `error-${Date.now()}`, role: 'assistant', content: errorMsg, isError: true, retryMessage: retryMessage },
+          ]);
+        } finally {
+          setIsLoading(false);
+          setInput('');
+        }
+      })();
+    },
+    []
   );
 
   if (!mounted) return null;
@@ -286,14 +360,38 @@ export function SalameeChat() {
                       padding: '10px 14px',
                       fontSize: 13,
                       lineHeight: 1.6,
-                      background: msg.role === 'user' ? '#1D333B' : '#F8F6F3',
-                      color: msg.role === 'user' ? '#fff' : '#1D333B',
+                      background: msg.role === 'user' ? '#1D333B' : (msg.isError ? '#FEF2F2' : '#F8F6F3'),
+                      color: msg.role === 'user' ? '#fff' : (msg.isError ? '#DC2626' : '#1D333B'),
                       borderBottomRightRadius: msg.role === 'user' ? 6 : 16,
                       borderBottomLeftRadius: msg.role === 'user' ? 16 : 6,
-                      border: msg.role === 'assistant' ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                      border: msg.role === 'assistant' ? (msg.isError ? '1px solid rgba(220,38,38,0.15)' : '1px solid rgba(0,0,0,0.06)') : 'none',
                     }}
                   >
                     {msg.content}
+                    {msg.isError && msg.retryMessage && (
+                      <button
+                        onClick={() => handleRetry(msg.retryMessage!)}
+                        disabled={isLoading}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          marginTop: 8,
+                          padding: '4px 10px',
+                          borderRadius: 8,
+                          background: 'rgba(220,38,38,0.08)',
+                          border: '1px solid rgba(220,38,38,0.2)',
+                          color: '#DC2626',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: isLoading ? 'not-allowed' : 'pointer',
+                          opacity: isLoading ? 0.5 : 1,
+                        }}
+                      >
+                        <RefreshCw style={{ width: 11, height: 11 }} />
+                        Retry
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

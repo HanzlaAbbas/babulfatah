@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Search, BookOpen, ShoppingCart, User } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Home, Search, BookOpen, ShoppingCart, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/store/use-cart'
 
@@ -20,17 +20,7 @@ export function MobileBottomNav() {
   const openCart = useCart((s) => s.openCart)
 
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
-
-  const handleSearch = () => {
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'k',
-        code: 'KeyK',
-        ctrlKey: true,
-        bubbles: true,
-      })
-    )
-  }
+  const router = useRouter()
 
   const tabs: NavTab[] = [
     {
@@ -42,7 +32,7 @@ export function MobileBottomNav() {
     {
       label: 'Search',
       icon: Search,
-      action: handleSearch,
+      action: () => router.push('/search'),
     },
     {
       label: 'Categories',
@@ -56,10 +46,10 @@ export function MobileBottomNav() {
       action: openCart,
     },
     {
-      label: 'Account',
-      icon: User,
-      href: '/about',
-      matchPaths: ['/about'],
+      label: 'Wishlist',
+      icon: Heart,
+      href: '/wishlist',
+      matchPaths: ['/wishlist'],
     },
   ]
 
