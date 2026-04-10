@@ -3,14 +3,14 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-// ── Inter: Primary UI font ──
+// -- Inter: Primary UI font --
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
 
-// ── Geist Mono: Code/monospace fallback ──
+// -- Geist Mono: Code/monospace fallback --
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Bab-ul-Fatah — Premium Islamic E-Commerce",
+    default: "Bab-ul-Fatah - Premium Islamic E-Commerce",
     template: "%s | Bab-ul-Fatah",
   },
   description:
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     icon: "/logo.png",
   },
   openGraph: {
-    title: "Bab-ul-Fatah — Premium Islamic E-Commerce",
+    title: "Bab-ul-Fatah - Premium Islamic E-Commerce",
     description:
       "Discover premium Islamic books, literature, and products with worldwide shipping.",
     type: "website",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bab-ul-Fatah — Premium Islamic E-Commerce",
+    title: "Bab-ul-Fatah - Premium Islamic E-Commerce",
     description:
       "Discover premium Islamic books, literature, and products with worldwide shipping.",
   },

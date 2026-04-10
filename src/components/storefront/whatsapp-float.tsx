@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-// ─── WhatsApp Floating Button ─────────────────────────────────────────────────
+// --- WhatsApp Floating Button -------------------------------------------------
 // Renders via React Portal directly to document.body to guarantee
 // fixed bottom-left positioning regardless of parent CSS context.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 export function WhatsAppFloat() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -22,7 +22,7 @@ export function WhatsAppFloat() {
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
+        bottom: '80px',
         left: '20px',
         zIndex: 99999,
       }}

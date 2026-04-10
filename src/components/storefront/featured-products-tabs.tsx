@@ -6,7 +6,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/storefront/product-card';
 import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 export interface TabProduct {
   id: string;
@@ -29,7 +29,7 @@ interface FeaturedProductsTabsProps {
   categories: TabCategory[];
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) {
   const [activeTab, setActiveTab] = useState(0);
@@ -75,7 +75,7 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
     [scrollToTab, handleTabClick]
   );
 
-  // ── Carousel navigation ──
+  // -- Carousel navigation --
   const scrollBy = useCallback((direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -114,7 +114,7 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
   return (
     <section className="py-10 md:py-14 lg:py-16 bg-white" ref={animRef}>
       <div className="container mx-auto px-4 md:px-6" data-animate>
-        {/* ── Section Header ── */}
+        {/* -- Section Header -- */}
         <div className="flex items-end justify-between mb-6 md:mb-8">
           <div>
             <p className="text-xs uppercase tracking-[0.15em] text-golden font-medium mb-1.5">
@@ -133,7 +133,7 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
           </Link>
         </div>
 
-        {/* ── Tab Navigation (bottom border style) ── */}
+        {/* -- Tab Navigation (bottom border style) -- */}
         <div className="relative mb-6 md:mb-8 border-b border-border/60">
           <div
             ref={tabsScrollRef}
@@ -162,7 +162,7 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
           </div>
         </div>
 
-        {/* ── Product Carousel ── */}
+        {/* -- Product Carousel -- */}
         <div
           className={`transition-all duration-300 ${
             isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
@@ -178,14 +178,14 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
                 {activeProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="w-[120px] sm:w-[135px] md:w-[155px] lg:w-[170px] shrink-0 snap-start"
+                    className="w-[130px] sm:w-[135px] md:w-[155px] lg:w-[170px] shrink-0 snap-start"
                   >
                     <ProductCard product={product} />
                   </div>
                 ))}
               </div>
 
-              {/* ── Scroll Navigation Arrows ── */}
+              {/* -- Scroll Navigation Arrows -- */}
               {canScrollLeft && (
                 <button
                   onClick={() => scrollBy('left')}
@@ -214,7 +214,7 @@ export function FeaturedProductsTabs({ categories }: FeaturedProductsTabsProps) 
           )}
         </div>
 
-        {/* ── Mobile View All Button ── */}
+        {/* -- Mobile View All Button -- */}
         <div className="mt-6 text-center sm:hidden">
           <Link
             href="/shop"

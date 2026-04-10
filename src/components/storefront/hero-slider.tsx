@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, Star, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// ─── Slide Data ──────────────────────────────────────────────────────────────
+// --- Slide Data --------------------------------------------------------------
 
 interface Slide {
   id: string;
@@ -68,7 +68,7 @@ const slides: Slide[] = [
     title: 'Study The Noble',
     titleHighlight: "Qur'an",
     description:
-      "Premium quality Holy Qurans with translations in Urdu and English. From Hafzi to Ahsan-ul-Hawashi — find your perfect copy.",
+      "Premium quality Holy Qurans with translations in Urdu and English. From Hafzi to Ahsan-ul-Hawashi - find your perfect copy.",
     features: ['Multiple Translations', 'Premium Binding', 'All Sizes Available'],
     cta: { label: "Browse Qur'an Collection", href: '/shop?category=quran' },
     secondaryCta: { label: 'View Tafseer', href: '/shop?category=tafseer' },
@@ -93,7 +93,7 @@ const slides: Slide[] = [
   },
 ];
 
-// ─── Accent Color Config ─────────────────────────────────────────────────────
+// --- Accent Color Config -----------------------------------------------------
 
 const accentColors = {
   golden: {
@@ -113,7 +113,7 @@ const accentColors = {
   },
 };
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// --- Progress Bar -------------------------------------------------------------
 
 function HeroProgress({ currentIndex }: { currentIndex: number }) {
   const [progress, setProgress] = useState(0);
@@ -157,7 +157,7 @@ function HeroProgress({ currentIndex }: { currentIndex: number }) {
   );
 }
 
-// ─── Staggered Child ─────────────────────────────────────────────────────────
+// --- Staggered Child ---------------------------------------------------------
 
 function StaggeredChild({
   children,
@@ -184,7 +184,7 @@ function StaggeredChild({
   );
 }
 
-// ─── Slide Content ───────────────────────────────────────────────────────────
+// --- Slide Content -----------------------------------------------------------
 
 function SlideContent({
   slide,
@@ -211,7 +211,7 @@ function SlideContent({
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 w-full">
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-7xl mx-auto ${isRight ? '[direction:rtl]' : ''}`}>
-          {/* ── Text Content ── */}
+          {/* -- Text Content -- */}
           <div className={`lg:col-span-7 space-y-4 md:space-y-6 py-10 md:py-16 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
             {/* Badge */}
             <StaggeredChild index={0} isActive={isActive}>
@@ -317,7 +317,7 @@ function SlideContent({
             </StaggeredChild>
           </div>
 
-          {/* ── Product Showcase ── */}
+          {/* -- Product Showcase -- */}
           <div className={`lg:col-span-5 hidden lg:flex justify-center items-center ${isRight ? '[direction:ltr]' : ''}`}>
             <div
               className="relative w-full max-w-md transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -408,13 +408,13 @@ function SlideContent({
   );
 }
 
-// ─── Islamic Pattern Overlay ─────────────────────────────────────────────────
+// --- Islamic Pattern Overlay -------------------------------------------------
 
 function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
   const color = accentColors[accent].primary;
   return (
     <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-      {/* Geometric pattern — top-right */}
+      {/* Geometric pattern - top-right */}
       <svg className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.04]" viewBox="0 0 500 500" fill="none">
         <defs>
           <pattern id="hero-geo-1" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
@@ -426,7 +426,7 @@ function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
         <rect width="500" height="500" fill="url(#hero-geo-1)" />
       </svg>
 
-      {/* Geometric pattern — bottom-left */}
+      {/* Geometric pattern - bottom-left */}
       <svg className="absolute bottom-0 left-0 w-[400px] h-[400px] opacity-[0.03]" viewBox="0 0 400 400" fill="none">
         <defs>
           <pattern id="hero-geo-2" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -450,7 +450,7 @@ function IslamicOverlay({ accent }: { accent: 'golden' | 'emerald' | 'warm' }) {
   );
 }
 
-// ─── Main Hero Slider ────────────────────────────────────────────────────────
+// --- Main Hero Slider --------------------------------------------------------
 
 export function HeroSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -519,7 +519,7 @@ export function HeroSlider() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* ── Background Images ── */}
+      {/* -- Background Images -- */}
       <div className="absolute inset-0 z-0">
         {slides.map((slide) => (
           <div
@@ -558,11 +558,11 @@ export function HeroSlider() {
         }} />
       </div>
 
-      {/* ── Islamic Pattern ── */}
+      {/* -- Islamic Pattern -- */}
       <IslamicOverlay accent={currentSlide.accent} />
 
-      {/* ── Slide Content ── */}
-      <div className="relative z-20 min-h-[580px] md:min-h-[680px] lg:min-h-[88vh]">
+      {/* -- Slide Content -- */}
+      <div className="relative z-20 min-h-[420px] sm:min-h-[480px] md:min-h-[680px] lg:min-h-[88vh]">
         {slides.map((slide) => (
           <SlideContent
             key={slide.id}
@@ -573,7 +573,7 @@ export function HeroSlider() {
         ))}
       </div>
 
-      {/* ── Navigation Arrows ── */}
+      {/* -- Navigation Arrows -- */}
       <button
         onClick={goPrev}
         className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
@@ -589,7 +589,7 @@ export function HeroSlider() {
         <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
       </button>
 
-      {/* ── Bottom Navigation Bar ── */}
+      {/* -- Bottom Navigation Bar -- */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
         {/* Thin accent line */}
         <div
