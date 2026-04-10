@@ -8,6 +8,9 @@ import { TrustSection } from '@/components/storefront/trust-section';
 import { CtaBanner } from '@/components/storefront/cta-banner';
 import type { TabCategory } from '@/components/storefront/featured-products-tabs';
 
+// ── Dynamic Rendering — fetch data at request time ────────────────
+export const dynamic = 'force-dynamic';
+
 // ─── Tab category names for Featured Products ─────────────────────────────────
 
 const tabCategoryNames = [

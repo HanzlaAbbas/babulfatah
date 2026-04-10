@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const BASE_URL = 'https://www.babulfatah.com';
 
 // ═══════════════════════════════════════════════════════════════════

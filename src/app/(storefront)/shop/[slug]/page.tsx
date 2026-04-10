@@ -20,11 +20,8 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ── Static Generation ─────────────────────────────────────────
-export async function generateStaticParams() {
-  const products = await db.product.findMany({ select: { slug: true } });
-  return products.map((p) => ({ slug: p.slug }));
-}
+// ── Dynamic Rendering — fetch data at request time ────────────────
+export const dynamic = 'force-dynamic';
 
 // ── Dynamic Metadata for SEO ──────────────────────────────────
 export async function generateMetadata({

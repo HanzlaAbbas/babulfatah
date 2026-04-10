@@ -28,15 +28,9 @@ interface AuthorPageProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Static Generation — Pre-render all author pages
+//  Dynamic Rendering — fetch data at request time
 // ═══════════════════════════════════════════════════════════════════
-export async function generateStaticParams() {
-  const authors = await db.author.findMany({
-    where: { products: { some: {} } },
-    select: { name: true },
-  });
-  return authors.map((a) => ({ slug: slugify(a.name) }));
-}
+export const dynamic = 'force-dynamic';
 
 // ═══════════════════════════════════════════════════════════════════
 //  Dynamic Metadata — Per-author SEO

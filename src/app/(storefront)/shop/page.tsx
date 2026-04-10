@@ -9,6 +9,8 @@ import { Prisma } from '@prisma/client';
 
 const PRODUCTS_PER_PAGE = 24;
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Shop All Books | Bab-ul-Fatah',
   description:

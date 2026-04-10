@@ -48,24 +48,9 @@ function parseCombo(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  STATIC PARAMS — Generate all category×language combos
+//  Dynamic Rendering — fetch data at request time
 // ═══════════════════════════════════════════════════════════════════
-
-export async function generateStaticParams() {
-  const categories = await db.category.findMany({
-    select: { slug: true, parentId: true },
-  });
-  // Only generate combos for top-level categories (children have parentId set)
-  const topCategories = categories.filter((c) => c.parentId === null);
-  const combos: { combo: string }[] = [];
-
-  for (const cat of topCategories) {
-    for (const lang of LANG_KEYS) {
-      combos.push({ combo: `${cat.slug}-${lang}` });
-    }
-  }
-  return combos;
-}
+export const dynamic = 'force-dynamic';
 
 // ═══════════════════════════════════════════════════════════════════
 //  DYNAMIC METADATA

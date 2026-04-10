@@ -40,10 +40,8 @@ const CITIES = [
 const BASE_URL = 'https://www.babulfatah.com';
 const WHATSAPP_NUMBER = '923265903300';
 
-// ── Static params ────────────────────────────────────────────────
-export function generateStaticParams() {
-  return CITIES.map((city) => ({ slug: city.slug }));
-}
+// ── Dynamic Rendering — fetch data at request time ────────────────
+export const dynamic = 'force-dynamic';
 
 // ── Metadata ─────────────────────────────────────────────────────
 interface PageProps {

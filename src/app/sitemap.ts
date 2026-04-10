@@ -2,10 +2,7 @@ import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
 
 // ── Dynamic Sitemap ──────────────────────────────────────────
-// Generates a comprehensive XML sitemap with ALL public-facing
-// URLs: static pages, categories, products, prog-SEO pages
-// (buy, combo, authors, delivery), RSS, and JSON-LD feeds.
-// ─────────────────────────────────────────────────────────────
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://www.babulfatah.com';
 

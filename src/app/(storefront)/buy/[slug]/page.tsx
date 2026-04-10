@@ -28,12 +28,9 @@ interface BuyPageProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  STATIC GENERATION — Pre-render all /buy/[slug] pages at build
+//  Dynamic Rendering — fetch data at request time
 // ═══════════════════════════════════════════════════════════════════
-export async function generateStaticParams() {
-  const products = await db.product.findMany({ select: { slug: true } });
-  return products.map((p) => ({ slug: p.slug }));
-}
+export const dynamic = 'force-dynamic';
 
 // ═══════════════════════════════════════════════════════════════════
 //  ADVANCED SEO — Programmatic "Buy" Page Metadata
