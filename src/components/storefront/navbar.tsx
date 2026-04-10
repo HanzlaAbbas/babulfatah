@@ -25,7 +25,7 @@ import { CartSheet } from '@/components/storefront/cart-sheet';
 import { SearchBar } from '@/components/storefront/search-bar';
 import { useCart } from '@/store/use-cart';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 interface CategoryNode {
   id: string;
@@ -35,19 +35,19 @@ interface CategoryNode {
   children: CategoryNode[];
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// --- Constants -----------------------------------------------------------------
 
 /** Max top-level categories to show as pills before "More ▾" on desktop */
 const MAX_VISIBLE_CATEGORIES = 7;
 
-// ─── Navbar Component ─────────────────────────────────────────────────────────
+// --- Navbar Component ---------------------------------------------------------
 // Premium "Scholar's Library" navbar with:
 //   - Glass-effect sticky header with scroll shadow
 //   - Desktop: Logo (left) + Search (center) + Cart+User (right)
 //   - Horizontal category pill nav with "More ▾" mega-menu
 //   - Mobile: Hamburger (left) + Logo (center) + Cart (right)
 //   - Mobile sheet: accordion categories + static quick links
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,7 +62,7 @@ export function Navbar() {
   const openCart = useCart((s) => s.openCart);
   const closeCart = useCart((s) => s.closeCart);
 
-  // ── Scroll shadow effect ──
+  // -- Scroll shadow effect --
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 8);
@@ -72,7 +72,7 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ── Fetch category tree on mount ──
+  // -- Fetch category tree on mount --
   useEffect(() => {
     let cancelled = false;
 
@@ -85,7 +85,7 @@ export function Navbar() {
           setCategoryTree(data.tree || []);
         }
       } catch {
-        // Silent fail — navbar works without categories
+        // Silent fail - navbar works without categories
       }
     }
 
@@ -93,7 +93,7 @@ export function Navbar() {
     return () => { cancelled = true; };
   }, []);
 
-  // ── "More" dropdown hover handlers ──
+  // -- "More" dropdown hover handlers --
   const handleMoreEnter = useCallback(() => {
     if (moreTimeoutRef.current) clearTimeout(moreTimeoutRef.current);
     setMoreOpen(true);
@@ -103,7 +103,7 @@ export function Navbar() {
     moreTimeoutRef.current = setTimeout(() => setMoreOpen(false), 200);
   }, []);
 
-  // ── Dismiss "More" on click outside ──
+  // -- Dismiss "More" on click outside --
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -117,11 +117,11 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ── Derived: visible vs overflow categories ──
+  // -- Derived: visible vs overflow categories --
   const visibleCategories = categoryTree.slice(0, MAX_VISIBLE_CATEGORIES);
   const overflowCategories = categoryTree.slice(MAX_VISIBLE_CATEGORIES);
 
-  // ── Static quick links (mobile sheet) ──
+  // -- Static quick links (mobile sheet) --
   const quickLinks = [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'All Books' },
@@ -133,9 +133,9 @@ export function Navbar() {
 
   return (
     <>
-      {/* ════════════════════════════════════════════════════════════════════════
-          HEADER — Sticky solid white bar
-          ════════════════════════════════════════════════════════════════════════ */}
+      {/* ========================================================================
+          HEADER - Sticky solid white bar
+          ======================================================================== */}
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 bg-white ${
           scrolled
@@ -143,9 +143,9 @@ export function Navbar() {
             : 'border-b border-border/50'
         }`}
       >
-        {/* ── Main Row ── */}
+        {/* -- Main Row -- */}
         <div className="container mx-auto flex items-center h-14 md:h-[60px] px-4 md:px-6 gap-4">
-          {/* ── Mobile: Hamburger (left) ── */}
+          {/* -- Mobile: Hamburger (left) -- */}
           <div className="flex items-center lg:hidden shrink-0">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -177,12 +177,12 @@ export function Navbar() {
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto scrollbar-thin">
-                  {/* ── Mobile Search ── */}
+                  {/* -- Mobile Search -- */}
                   <div className="px-4 py-3">
                     <SearchBar variant="mobile" />
                   </div>
 
-                  {/* ── Categories Accordion ── */}
+                  {/* -- Categories Accordion -- */}
                   {categoryTree.length > 0 && (
                     <div className="px-4 pb-3">
                       <h4 className="text-[11px] font-semibold uppercase tracking-wider text-golden-dark mb-2 px-1">
@@ -195,7 +195,7 @@ export function Navbar() {
                     </div>
                   )}
 
-                  {/* ── Quick Links ── */}
+                  {/* -- Quick Links -- */}
                   <div className="border-t border-border/40 px-4 pt-3 pb-6">
                     <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
                       Quick Links
@@ -218,7 +218,7 @@ export function Navbar() {
             </Sheet>
           </div>
 
-          {/* ── Logo (desktop: left, mobile: center) ── */}
+          {/* -- Logo (desktop: left, mobile: center) -- */}
           <Link
             href="/"
             className="shrink-0 hidden lg:block"
@@ -241,18 +241,18 @@ export function Navbar() {
               width={140}
               height={35}
               priority
-              className="h-8 w-auto rounded
+              className="h-8 w-auto rounded"
             />
           </Link>
 
-          {/* ── Desktop: Center Search Bar ── */}
+          {/* -- Desktop: Center Search Bar -- */}
           <div className="hidden lg:flex flex-1 justify-center">
             <div className="w-full max-w-md">
               <SearchBar variant="navbar" />
             </div>
           </div>
 
-          {/* ── Desktop: Right Actions ── */}
+          {/* -- Desktop: Right Actions -- */}
           <div className="hidden lg:flex items-center gap-1 shrink-0">
             {/* User / Account */}
             <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-brand">
@@ -277,7 +277,7 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* ── Mobile: Cart (right) ── */}
+          {/* -- Mobile: Cart (right) -- */}
           <div className="flex items-center gap-1 lg:hidden shrink-0 ml-auto">
             {/* Mobile search trigger */}
             <Button
@@ -315,13 +315,13 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════════
-            CATEGORY NAV — Horizontal pill bar
-            ══════════════════════════════════════════════════════════════════════ */}
+        {/* ======================================================================
+            CATEGORY NAV - Horizontal pill bar
+            ====================================================================== */}
         {categoryTree.length > 0 && (
           <div className="border-t border-border/30 bg-white">
             <div className="container mx-auto px-4 md:px-6">
-              {/* ── Desktop: pills + More dropdown ── */}
+              {/* -- Desktop: pills + More dropdown -- */}
               <div className="hidden lg:flex items-center h-10 gap-1">
                 {/* "All Books" pill */}
                 <Link
@@ -331,7 +331,7 @@ export function Navbar() {
                   All Books
                 </Link>
 
-                {/* Goodword Books — highlighted publisher pill */}
+                {/* Goodword Books - highlighted publisher pill */}
                 <Link
                   href="/shop?category=goodword-books"
                   className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
@@ -340,7 +340,7 @@ export function Navbar() {
                   Goodword
                 </Link>
 
-                {/* IIPH Books — highlighted publisher pill */}
+                {/* IIPH Books - highlighted publisher pill */}
                 <Link
                   href="/shop?category=iiph"
                   className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
@@ -380,7 +380,7 @@ export function Navbar() {
                       />
                     </button>
 
-                    {/* ── Dropdown Panel ── */}
+                    {/* -- Dropdown Panel -- */}
                     {moreOpen && (
                       <div
                         className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-border/60 rounded-xl shadow-elevated overflow-hidden z-50 animate-in fade-in-0 slide-in-from-top-1 duration-150"
@@ -451,7 +451,7 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* ── Mobile: horizontal scrollable pills ── */}
+              {/* -- Mobile: horizontal scrollable pills -- */}
               <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4">
                 <Link
                   href="/shop"
@@ -459,7 +459,7 @@ export function Navbar() {
                 >
                   All Books
                 </Link>
-                {/* Goodword Books — highlighted publisher pill (mobile) */}
+                {/* Goodword Books - highlighted publisher pill (mobile) */}
                 <Link
                   href="/shop?category=goodword-books"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
@@ -467,7 +467,7 @@ export function Navbar() {
                   <Star className="h-2.5 w-2.5" />
                   Goodword
                 </Link>
-                {/* IIPH Books — highlighted publisher pill (mobile) */}
+                {/* IIPH Books - highlighted publisher pill (mobile) */}
                 <Link
                   href="/shop?category=iiph"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
@@ -490,7 +490,7 @@ export function Navbar() {
         )}
       </header>
 
-      {/* ── Cart Sheet ── */}
+      {/* -- Cart Sheet -- */}
       <CartSheet
         open={cartIsOpen}
         onOpenChange={(open) => {
@@ -502,10 +502,10 @@ export function Navbar() {
   );
 }
 
-// ─── Mobile Category Accordion ─────────────────────────────────────────────────
+// --- Mobile Category Accordion -------------------------------------------------
 // Renders nested category tree as a collapsible accordion for the mobile
 // sheet menu. Each level indented with golden accent styling.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 function MobileCategoryAccordion({
   categories,
