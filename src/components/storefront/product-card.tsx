@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { BookOpen, ShoppingCart, Heart, Eye, MessageCircle } from 'lucide-react';
+import { BookOpen, ShoppingCart, Heart, Eye } from 'lucide-react';
 import { useCart } from '@/store/use-cart';
 import { useWishlist } from '@/store/use-wishlist';
 
@@ -72,20 +72,6 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
     [toggleItem, product, displayImage]
   );
 
-  const handleWhatsAppOrder = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const message = `Assalamu Alaikum! I'm interested in:\n\n📘 ${product.title}\n💰 Rs. ${product.price.toLocaleString('en-PK')}\n\nPlease confirm availability and order details.`;
-      window.open(
-        `https://wa.me/+923265903300?text=${encodeURIComponent(message)}`,
-        '_blank',
-        'noopener,noreferrer'
-      );
-    },
-    [product]
-  );
-
   return (
     <div className="group relative flex flex-col h-full rounded-xl overflow-hidden bg-white border border-border/40 hover:border-golden/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated">
       {/* ── Image Container ── */}
@@ -147,7 +133,7 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
               className={`flex-1 h-8 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 backdrop-blur-sm ${
                 inStock
                   ? 'bg-golden text-golden-foreground hover:bg-golden-light shadow-md'
-                  : 'bg-white/80 text-muted-foreground cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >
               <ShoppingCart className="h-3 w-3" />
@@ -174,35 +160,10 @@ export function ProductCard({ product, variant = 'light' }: ProductCardProps) {
           </h3>
         </Link>
 
-        {/* Price + Mobile Action Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          <span className="text-sm font-bold text-brand-dark tracking-tight">
-            Rs. {product.price.toLocaleString('en-PK')}
-          </span>
-          {/* Mobile-only: Add to Cart + WhatsApp buttons (always visible below lg) */}
-          <div className="flex items-center gap-1 lg:hidden">
-            <button
-              onClick={handleAddToCart}
-              disabled={!inStock}
-              className={`h-7 px-2.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all duration-200 ${
-                inStock
-                  ? 'bg-golden text-golden-foreground hover:bg-golden-light'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
-              aria-label="Add to cart"
-            >
-              <ShoppingCart className="h-3 w-3" />
-              Add
-            </button>
-            <button
-              onClick={handleWhatsAppOrder}
-              className="h-7 w-7 rounded-lg bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all duration-200"
-              aria-label="Order via WhatsApp"
-            >
-              <MessageCircle className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
+        {/* Price */}
+        <span className="text-sm font-bold text-brand-dark tracking-tight pt-0.5">
+          Rs. {product.price.toLocaleString('en-PK')}
+        </span>
       </div>
     </div>
   );
