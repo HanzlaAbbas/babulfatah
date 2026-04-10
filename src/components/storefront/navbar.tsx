@@ -163,7 +163,7 @@ export function Navbar() {
                       alt="Bab-ul-Fatah"
                       width={140}
                       height={35}
-                      className="h-8 w-auto rounded
+                      className="h-8 w-auto rounded"
                     />
                     <div>
                       <span className="text-base font-bold text-brand tracking-tight block leading-tight">
@@ -229,7 +229,7 @@ export function Navbar() {
               width={140}
               height={35}
               priority
-              className="h-9 w-auto rounded
+              className="h-9 w-auto rounded"
             />
           </Link>
 
