@@ -52,7 +52,7 @@ const slides: Slide[] = [
     title: 'Teach Your Children the',
     titleHighlight: 'Beauty of Islam',
     description:
-      "Engaging kids' books, prayer mats, and educational resources designed to nurture love for Allah and His Messenger.",
+      "Engaging kids' books, prayer mats, and educational resources designed to nurture love for Allah and His Messenger ﷺ.",
     features: ['50+ Kids Titles', 'Age-Appropriate', 'Colorful & Interactive'],
     cta: { label: 'Shop Kids Collection', href: '/shop?category=children' },
     secondaryCta: { label: 'View All Goodword', href: '/shop?category=goodword-books' },
@@ -68,7 +68,7 @@ const slides: Slide[] = [
     title: 'Study The Noble',
     titleHighlight: "Qur'an",
     description:
-      "Premium quality Holy Qurans with translations in Urdu and English. From Hafzi to Ahsan-ul-Hawashi.",
+      "Premium quality Holy Qurans with translations in Urdu and English. From Hafzi to Ahsan-ul-Hawashi — find your perfect copy.",
     features: ['Multiple Translations', 'Premium Binding', 'All Sizes Available'],
     cta: { label: "Browse Qur'an Collection", href: '/shop?category=quran' },
     secondaryCta: { label: 'View Tafseer', href: '/shop?category=tafseer' },
@@ -80,11 +80,11 @@ const slides: Slide[] = [
     bgImage: '/hero/hero-premium-collection.jpg',
     badge: 'Best Sellers',
     badgeIcon: 'star',
-    subtitle: 'Life of the Prophet',
+    subtitle: 'Life of the Prophet ﷺ',
     title: 'Discover the',
     titleHighlight: "Prophet's Seerah",
     description:
-      "Immerse yourself in the beautiful life story of Prophet Muhammad. From Ar-Raheequl-Makhtum to detailed biographies.",
+      "Immerse yourself in the beautiful life story of Prophet Muhammad ﷺ. From Ar-Raheequl-Makhtum to detailed biographies.",
     features: ['Ar-Raheequl-Makhtum', 'Sahabah Stories', 'Prophetic Biography'],
     cta: { label: 'Explore Seerah', href: '/shop?category=prophets-seerah' },
     secondaryCta: { label: 'View All Books', href: '/shop' },
@@ -210,42 +210,41 @@ function SlideContent({
       }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 w-full">
-        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center max-w-7xl mx-auto ${isRight ? '[direction:rtl]' : ''}`}>
-          {/* ── Text Content — MOBILE OPTIMIZED ── */}
-          <div className={`lg:col-span-7 space-y-3 sm:space-y-4 md:space-y-6 py-8 sm:py-12 md:py-16 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
-            {/* Badge — smaller on mobile */}
+        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-7xl mx-auto ${isRight ? '[direction:rtl]' : ''}`}>
+          {/* ── Text Content ── */}
+          <div className={`lg:col-span-7 space-y-3 sm:space-y-4 md:space-y-6 py-6 sm:py-10 md:py-16 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
+            {/* Badge */}
             <StaggeredChild index={0} isActive={isActive}>
               <div
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider backdrop-blur-md border"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md border"
                 style={{
                   color: colors.light,
                   backgroundColor: `${colors.primary}15`,
                   borderColor: `${colors.primary}30`,
                 }}
               >
-                {slide.badgeIcon === 'book' && <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                {slide.badgeIcon === 'sparkle' && <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                {slide.badgeIcon === 'star' && <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                <span className="hidden xs:inline">{slide.badge}</span>
-                <span className="xs:hidden">{slide.badge?.split(' ').slice(-3).join(' ')}</span>
+                {slide.badgeIcon === 'book' && <BookOpen className="w-3.5 h-3.5" />}
+                {slide.badgeIcon === 'sparkle' && <Sparkles className="w-3.5 h-3.5" />}
+                {slide.badgeIcon === 'star' && <Star className="w-3.5 h-3.5" />}
+                {slide.badge}
               </div>
             </StaggeredChild>
 
-            {/* Subtitle — compact on mobile */}
+            {/* Subtitle */}
             <StaggeredChild index={1} isActive={isActive}>
-              <p className="text-white/50 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase">
+              <p className="text-white/50 text-sm md:text-base font-medium tracking-wider uppercase">
                 {slide.subtitle}
               </p>
             </StaggeredChild>
 
-            {/* Title — MOBILE OPTIMIZED sizing */}
+            {/* Title */}
             <StaggeredChild index={2} isActive={isActive}>
               <div className="space-y-0.5 sm:space-y-1">
-                <h1 className="text-[1.55rem] sm:text-3xl md:text-4xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold text-white font-serif tracking-tight leading-[1.1] sm:leading-[1.08]">
+                <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold text-white font-serif tracking-tight leading-[1.08]">
                   {slide.title}
                 </h1>
                 <h1
-                  className="text-[1.55rem] sm:text-3xl md:text-4xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold font-serif tracking-tight leading-[1.1] sm:leading-[1.08]"
+                  className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold font-serif tracking-tight leading-[1.08]"
                   style={{ color: colors.primary }}
                 >
                   {slide.titleHighlight}
@@ -253,48 +252,41 @@ function SlideContent({
               </div>
             </StaggeredChild>
 
-            {/* Description — smaller on mobile, hidden on very small */}
+            {/* Description */}
             <StaggeredChild index={3} isActive={isActive}>
-              <p className="text-white/60 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed hidden sm:block">
+              <p className="text-white/60 sm:text-white/65 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed">
                 {slide.description}
-              </p>
-              {/* Mobile-only shorter description */}
-              <p className="text-white/55 text-xs sm:hidden max-w-[280px] leading-relaxed">
-                {slide.description.length > 120
-                  ? slide.description.slice(0, 120) + '...'
-                  : slide.description}
               </p>
             </StaggeredChild>
 
-            {/* Feature Pills — compact on mobile */}
+            {/* Feature Pills */}
             {slide.features && slide.features.length > 0 && (
               <StaggeredChild index={4} isActive={isActive}>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   {slide.features.map((feature, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border backdrop-blur-sm"
+                      className="inline-flex items-center gap-1.5 text-[11px] md:text-xs font-medium px-3 py-1.5 rounded-full border backdrop-blur-sm"
                       style={{
                         color: colors.light,
                         backgroundColor: `${colors.primary}10`,
                         borderColor: `${colors.primary}20`,
                       }}
                     >
-                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current opacity-80" />
-                      <span className="hidden sm:inline">{feature}</span>
-                      <span className="sm:hidden">{feature.length > 18 ? feature.slice(0, 16) + '..' : feature}</span>
+                      <Star className="w-3 h-3 fill-current opacity-80" />
+                      {feature}
                     </span>
                   ))}
                 </div>
               </StaggeredChild>
             )}
 
-            {/* CTA Buttons — MOBILE OPTIMIZED */}
+            {/* CTA Buttons */}
             <StaggeredChild index={5} isActive={isActive}>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-2 sm:pt-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3 pt-2 sm:pt-3">
                 <Button
                   size="lg"
-                  className="group font-semibold px-5 sm:px-7 md:px-8 h-11 sm:h-12 text-sm sm:text-base rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+                  className="group font-semibold px-6 sm:px-7 h-10 sm:h-12 text-[13px] sm:text-base rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] w-full sm:w-auto"
                   style={{
                     backgroundColor: colors.primary,
                     color: '#142229',
@@ -303,17 +295,16 @@ function SlideContent({
                   asChild
                 >
                   <Link href={slide.cta.href}>
-                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                      <span className="text-xs sm:text-sm">{slide.cta.label}</span>
-                      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
+                    <span className="flex items-center gap-2">
+                      {slide.cta.label}
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </Link>
                 </Button>
                 {slide.secondaryCta && (
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="font-medium px-5 sm:px-7 md:px-8 h-11 sm:h-12 text-xs sm:text-base rounded-xl backdrop-blur-sm border-white/20 text-white/80 hover:bg-white/10 hover:border-white/30 hover:text-white transition-all duration-300"
+                    className="font-medium px-6 sm:px-7 h-10 sm:h-12 text-[13px] sm:text-base rounded-xl backdrop-blur-sm bg-transparent border border-white/20 text-white/80 hover:bg-white/10 hover:border-white/30 hover:text-white transition-all duration-300 w-full sm:w-auto"
                     asChild
                   >
                     <Link href={slide.secondaryCta.href}>
@@ -325,7 +316,7 @@ function SlideContent({
             </StaggeredChild>
           </div>
 
-          {/* ── Product Showcase — hidden on mobile ── */}
+          {/* ── Product Showcase ── */}
           <div className={`lg:col-span-5 hidden lg:flex justify-center items-center ${isRight ? '[direction:ltr]' : ''}`}>
             <div
               className="relative w-full max-w-md transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -569,8 +560,8 @@ export function HeroSlider() {
       {/* ── Islamic Pattern ── */}
       <IslamicOverlay accent={currentSlide.accent} />
 
-      {/* ── Slide Content — MOBILE HEIGHT OPTIMIZED ── */}
-      <div className="relative z-20 min-h-[420px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[88vh]">
+      {/* ── Slide Content ── */}
+      <div className="relative z-20 min-h-[420px] sm:min-h-[520px] md:min-h-[680px] lg:min-h-[88vh]">
         {slides.map((slide) => (
           <SlideContent
             key={slide.id}
@@ -584,20 +575,20 @@ export function HeroSlider() {
       {/* ── Navigation Arrows ── */}
       <button
         onClick={goPrev}
-        className="absolute left-2 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Previous slide"
       >
-        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-0.5" />
+        <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
       </button>
       <button
         onClick={goNext}
-        className="absolute right-2 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Next slide"
       >
-        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-0.5" />
+        <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
       </button>
 
-      {/* ── Bottom Navigation Bar — MOBILE COMPACT ── */}
+      {/* ── Bottom Navigation Bar ── */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
         {/* Thin accent line */}
         <div
@@ -607,9 +598,9 @@ export function HeroSlider() {
           }}
         />
 
-        <div className="container mx-auto px-3 sm:px-6 lg:px-8 xl:px-16 py-3 sm:py-4 md:py-5">
-          <div className="flex items-center gap-3 sm:gap-6">
-            {/* Slide counter — hidden on mobile */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 py-4 sm:py-5">
+          <div className="flex items-center gap-4 sm:gap-6">
+            {/* Slide counter */}
             <div className="hidden sm:flex items-center gap-2.5 shrink-0">
               <span
                 className="text-xl font-bold tabular-nums"
@@ -628,7 +619,7 @@ export function HeroSlider() {
               <HeroProgress currentIndex={currentIndex} />
             </div>
 
-            {/* Slide label — hidden on mobile */}
+            {/* Slide label */}
             <div className="hidden md:block text-white/25 text-sm font-medium max-w-[180px] truncate">
               {currentSlide.titleHighlight}
             </div>

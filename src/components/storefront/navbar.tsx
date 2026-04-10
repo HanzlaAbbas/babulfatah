@@ -25,7 +25,6 @@ import {
 import { CartSheet } from '@/components/storefront/cart-sheet';
 import { SearchBar } from '@/components/storefront/search-bar';
 import { useCart } from '@/store/use-cart';
-import { useWishlist } from '@/store/use-wishlist';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +42,13 @@ interface CategoryNode {
 const MAX_VISIBLE_CATEGORIES = 7;
 
 // ─── Navbar Component ─────────────────────────────────────────────────────────
+// Premium "Scholar's Library" navbar with:
+//   - Glass-effect sticky header with scroll shadow
+//   - Desktop: Logo (left) + Search (center) + Cart+User (right)
+//   - Horizontal category pill nav with "More ▾" mega-menu
+//   - Mobile: Hamburger (left) + Logo (center) + Cart (right)
+//   - Mobile sheet: accordion categories + static quick links
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -56,14 +62,13 @@ export function Navbar() {
   const cartIsOpen = useCart((s) => s.isOpen);
   const openCart = useCart((s) => s.openCart);
   const closeCart = useCart((s) => s.closeCart);
-  const wishlistCount = useWishlist((s) => s.items.length);
 
   // ── Scroll shadow effect ──
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 8);
     };
-    handleScroll();
+    handleScroll(); // initial check
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -121,9 +126,8 @@ export function Navbar() {
   const quickLinks = [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'All Books' },
-    { href: '/shop?category=goodword-books', label: 'Goodword Books' },
-    { href: '/shop?category=iiph', label: 'IIPH Books' },
-    { href: '/wishlist', label: 'My Wishlist' },
+    { href: '/shop?category=goodword-books', label: '⭐ Goodword Books' },
+    { href: '/shop?category=iiph', label: '📚 IIPH Books' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
   ];
@@ -141,7 +145,7 @@ export function Navbar() {
         }`}
       >
         {/* ── Main Row ── */}
-        <div className="container mx-auto flex items-center h-12 md:h-14 lg:h-[60px] px-3 md:px-6 gap-3 md:gap-4">
+        <div className="container mx-auto flex items-center h-14 md:h-[60px] px-4 md:px-6 gap-4">
           {/* ── Mobile: Hamburger (left) ── */}
           <div className="flex items-center lg:hidden shrink-0">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -158,9 +162,9 @@ export function Navbar() {
                     <Image
                       src="/logo.svg"
                       alt="Bab-ul-Fatah"
-                      width={28}
-                      height={28}
-                      className="h-7 w-auto rounded"
+                      width={32}
+                      height={32}
+                      className="h-8 w-auto rounded"
                     />
                     <div>
                       <span className="text-base font-bold text-brand tracking-tight block leading-tight">
@@ -205,9 +209,6 @@ export function Navbar() {
                           onClick={() => setMobileOpen(false)}
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:text-brand transition-colors"
                         >
-                          {link.label === 'My Wishlist' && (
-                            <Heart className="h-3.5 w-3.5 text-crimson" />
-                          )}
                           {link.label}
                         </Link>
                       ))}
@@ -233,15 +234,15 @@ export function Navbar() {
             />
           </Link>
 
-          {/* Mobile center logo — smaller on small screens */
-          <Link href="/" className="shrink-0 lg:hidden absolute left-1/2 -translate-x-1/2 z-10">
+          {/* Mobile center logo */}
+          <Link href="/" className="shrink-0 lg:hidden absolute left-1/2 -translate-x-1/2">
             <Image
               src="/logo.svg"
               alt="Bab-ul-Fatah"
-              width={28}
-              height={28}
+              width={32}
+              height={32}
               priority
-              className="h-7 w-auto rounded max-[360px]:h-6"
+              className="h-8 w-auto rounded"
             />
           </Link>
 
@@ -254,24 +255,20 @@ export function Navbar() {
 
           {/* ── Desktop: Right Actions ── */}
           <div className="hidden lg:flex items-center gap-1 shrink-0">
-            {/* Wishlist */}
-            <Link href="/wishlist">
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-brand">
-                <Heart className="h-[18px] w-[18px]" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] rounded-full bg-crimson text-[10px] font-bold text-white flex items-center justify-center px-1">
-                    {wishlistCount}
-                  </span>
-                )}
-                <span className="sr-only">Wishlist</span>
-              </Button>
-            </Link>
-
             {/* User / Account */}
             <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-brand">
               <User className="h-[18px] w-[18px]" />
               <span className="sr-only">Account</span>
             </Button>
+
+            {/* Wishlist */}
+            <Link
+              href="/wishlist"
+              className="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-brand transition-colors"
+            >
+              <Heart className="h-[18px] w-[18px]" />
+              <span className="sr-only">Wishlist</span>
+            </Link>
 
             {/* Cart */}
             <Button
@@ -290,31 +287,23 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* ── Mobile: Cart + Wishlist (right) ── */}
-          <div className="flex items-center gap-0.5 lg:hidden shrink-0 ml-auto">
+          {/* ── Mobile: Cart (right) ── */}
+          <div className="flex items-center gap-1 lg:hidden shrink-0 ml-auto">
             {/* Mobile Wishlist */}
-            <Link href="/wishlist">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-9 w-9 text-muted-foreground hover:text-brand"
-              >
-                <Heart className="h-[18px] w-[18px]" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-[16px] min-w-[16px] rounded-full bg-crimson text-[9px] font-bold text-white flex items-center justify-center px-1">
-                    {wishlistCount}
-                  </span>
-                )}
-                <span className="sr-only">Wishlist</span>
-              </Button>
+            <Link
+              href="/wishlist"
+              className="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-brand transition-colors"
+            >
+              <Heart className="h-[18px] w-[18px]" />
+              <span className="sr-only">Wishlist</span>
             </Link>
-
             {/* Mobile search trigger */}
             <Button
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-muted-foreground"
               onClick={() => {
+                // Open mobile search by dispatching ⌘K-like event logic
                 const event = new KeyboardEvent('keydown', {
                   key: 'k',
                   metaKey: false,
@@ -327,8 +316,6 @@ export function Navbar() {
               <Search className="h-[18px] w-[18px]" />
               <span className="sr-only">Search</span>
             </Button>
-
-            {/* Mobile Cart */}
             <Button
               variant="ghost"
               size="icon"
@@ -337,7 +324,7 @@ export function Navbar() {
             >
               <ShoppingCart className="h-[18px] w-[18px]" />
               {totalItems() > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-[16px] min-w-[16px] rounded-full bg-golden text-[9px] font-bold text-golden-foreground flex items-center justify-center px-1">
+                <span className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] rounded-full bg-golden text-[10px] font-bold text-golden-foreground flex items-center justify-center px-1">
                   {totalItems()}
                 </span>
               )}
@@ -351,7 +338,7 @@ export function Navbar() {
             ══════════════════════════════════════════════════════════════════════ */}
         {categoryTree.length > 0 && (
           <div className="border-t border-border/30 bg-white">
-            <div className="container mx-auto px-3 md:px-6">
+            <div className="container mx-auto px-4 md:px-6">
               {/* ── Desktop: pills + More dropdown ── */}
               <div className="hidden lg:flex items-center h-10 gap-1">
                 {/* "All Books" pill */}
@@ -362,7 +349,7 @@ export function Navbar() {
                   All Books
                 </Link>
 
-                {/* Goodword Books */}
+                {/* Goodword Books — highlighted publisher pill */}
                 <Link
                   href="/shop?category=goodword-books"
                   className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
@@ -371,7 +358,7 @@ export function Navbar() {
                   Goodword
                 </Link>
 
-                {/* IIPH Books */}
+                {/* IIPH Books — highlighted publisher pill */}
                 <Link
                   href="/shop?category=iiph"
                   className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
@@ -456,7 +443,7 @@ export function Navbar() {
                                       className="flex items-center gap-1.5 py-1.5 pr-4 text-[13px] text-golden-dark hover:text-golden font-medium transition-colors"
                                       onClick={() => setMoreOpen(false)}
                                     >
-                                      View all {cat.children.length} subcategories
+                                      View all {cat.children.length} subcategories →
                                     </Link>
                                   )}
                                 </div>
@@ -483,13 +470,14 @@ export function Navbar() {
               </div>
 
               {/* ── Mobile: horizontal scrollable pills ── */}
-              <div className="flex lg:hidden items-center h-9 gap-1.5 overflow-x-auto scrollbar-none -mx-3 px-3">
+              <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4">
                 <Link
                   href="/shop"
                   className="px-3 py-1.5 rounded-full text-xs font-medium text-brand bg-brand/5 hover:bg-brand/10 transition-colors whitespace-nowrap shrink-0"
                 >
                   All Books
                 </Link>
+                {/* Goodword Books — highlighted publisher pill (mobile) */}
                 <Link
                   href="/shop?category=goodword-books"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
@@ -497,6 +485,7 @@ export function Navbar() {
                   <Star className="h-2.5 w-2.5" />
                   Goodword
                 </Link>
+                {/* IIPH Books — highlighted publisher pill (mobile) */}
                 <Link
                   href="/shop?category=iiph"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
@@ -532,6 +521,9 @@ export function Navbar() {
 }
 
 // ─── Mobile Category Accordion ─────────────────────────────────────────────────
+// Renders nested category tree as a collapsible accordion for the mobile
+// sheet menu. Each level indented with golden accent styling.
+// ─────────────────────────────────────────────────────────────────────────────
 
 function MobileCategoryAccordion({
   categories,
@@ -572,7 +564,9 @@ function MobileCategoryAccordion({
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                  depth === 0 ? 'bg-golden' : 'bg-golden/50'
+                  depth === 0
+                    ? 'bg-golden'
+                    : 'bg-golden/50'
                 }`}
               />
               <span
@@ -593,6 +587,7 @@ function MobileCategoryAccordion({
               )}
             </Link>
 
+            {/* Collapsible Children */}
             {hasChildren && isExpanded && (
               <div className="ml-3 border-l border-golden/15 pl-2 py-0.5 animate-fade-in">
                 <MobileCategoryAccordion
