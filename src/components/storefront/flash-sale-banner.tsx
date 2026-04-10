@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import Link from 'next/link';
-import { X, Phone, Truck, ShieldCheck, Headphones } from 'lucide-react';
+import { X } from 'lucide-react';
 
 // ─── Dismissal Persistence ──────────────────────────────────────────────────
 
@@ -47,11 +46,11 @@ export function FlashSaleBanner() {
   return (
     <div className="relative w-full">
       <div className="bg-brand relative flex items-center h-9 md:h-10 overflow-hidden">
-        {/* ── Marquee Ticker ── */}
+        {/* ── Marquee Ticker (faster animation: 20s) ── */}
         <div className="flex-1 overflow-hidden">
-          <div className="flex animate-marquee whitespace-nowrap">
-            {/* Two copies for seamless loop */}
-            {[0, 1].map((setIdx) => (
+          <div className="flex animate-marquee-fast whitespace-nowrap">
+            {/* Three copies for seamless loop with faster speed */}
+            {[0, 1, 2].map((setIdx) => (
               <span key={setIdx} className="inline-flex items-center">
                 {TICKER_ITEMS.map((text, i) => (
                   <span

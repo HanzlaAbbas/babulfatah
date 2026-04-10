@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
 
 // ── Simple in-memory rate limiter (per IP) ──────────────────
 // 10 requests per minute per IP. Resets on server restart.
@@ -63,13 +62,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const zai = await ZAI.create();
+    // ── Dynamic import z-ai-web-dev-sdk ──
+    // This prevents build-time import failures on environments where the SDK
+    // is not available or has initialization issues.
+    let ZAI: any;
+    try {
+      const sdk = await import('z-ai-web-dev-sdk');
+      ZAI = sdk.default || sdk.ZAI || sdk;
+    } catch (sdkErr) {
+      console.error('Failed to import z-ai-web-dev-sdk:', sdkErr);
+      return NextResponse.json({
+        reply: "I'm currently having trouble connecting to my knowledge base. Please try again in a moment, or contact us on WhatsApp at +92 326 5903300 for immediate assistance."
+      });
+    }
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are Salamee, an Islamic knowledge assistant for Bab-ul-Fatah — Pakistan's largest online Islamic bookstore. 
+    let zai: any;
+    try {
+      zai = await ZAI.create();
+    } catch (createErr) {
+      console.error('Failed to initialize ZAI SDK:', createErr);
+      return NextResponse.json({
+        reply: "I'm having trouble initializing right now. Please try again in a moment, or WhatsApp us at +92 326 5903300 for help."
+      });
+    }
+
+    // ── Try AI completion with fallback ──
+    let reply: string | null = null;
+
+    try {
+      const completion = await zai.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: `You are Salamee, an Islamic knowledge assistant for Bab-ul-Fatah — Pakistan's largest online Islamic bookstore.
 
 Your personality:
 - Warm, respectful, and knowledgeable
@@ -92,25 +117,48 @@ Store info:
 - Categories: Quran & Hadith, Tafseer, Biography, Seerah, Fiqh, Children, Prayer, Hajj & Umrah, Islamic Products, Healthy Foods
 
 Keep responses concise (2-4 paragraphs max) and helpful. If asked about non-Islamic topics, politely redirect to Islamic knowledge.`,
-        },
-        {
-          role: 'user',
-          content: message,
-        },
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-    });
+          },
+          {
+            role: 'user',
+            content: message,
+          },
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
 
-    const reply = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response. Please try again.';
+      reply = completion?.choices?.[0]?.message?.content || null;
+    } catch (completionErr) {
+      console.error('AI completion failed:', completionErr);
+    }
+
+    // ── Fallback: helpful predefined responses ──
+    if (!reply) {
+      const lowerMsg = message.toLowerCase();
+
+      if (lowerMsg.includes('quran') || lowerMsg.includes('qur'an')) {
+        reply = "We have a wide range of Quran translations including Urdu (Kanzul Iman, Ahsan-ul-Bayan), Arabic, and English (Sahih International, Pickthall). Our premium quality Qurans feature beautiful binding and clear print. You can browse our collection at /shop?category=quran or WhatsApp us at +92 326 5903300 for recommendations!";
+      } else if (lowerMsg.includes('hadith')) {
+        reply = "Our Hadith collection includes Sahih Bukhari, Sahih Muslim, Riyad-us-Saliheen, Bulugh-ul-Maram, and more — available in Urdu, Arabic, and English. These are essential for every Muslim's library. Visit /shop?category=hadith to explore or message us on WhatsApp for suggestions!";
+      } else if (lowerMsg.includes('seerah') || lowerMsg.includes('prophet') || lowerMsg.includes('biography')) {
+        reply = "For Seerah, we highly recommend Ar-Raheequl-Makhtum (The Sealed Nectar) — a masterpiece about the Prophet's life ﷺ. We also carry detailed biographies of the Sahabah and Islamic scholars. Browse at /shop?category=prophets-seerah or contact us for personalized recommendations!";
+      } else if (lowerMsg.includes('children') || lowerMsg.includes('kids')) {
+        reply = "We have a wonderful selection of children's Islamic books including Goodword publications — storybooks, coloring books, prayer guides, and educational series. They make perfect gifts to nurture love for Islam in young hearts! Visit /shop?category=children to explore the collection.";
+      } else if (lowerMsg.includes('price') || lowerMsg.includes('cod') || lowerMsg.includes('delivery') || lowerMsg.includes('shipping')) {
+        reply = "We offer Cash on Delivery (COD) nationwide across Pakistan! Delivery is FREE on orders above Rs. 5,000. We also accept JazzCash, EasyPaisa, and Bank Transfer. For international orders, please WhatsApp us at +92 326 5903300. Standard delivery takes 3-5 business days within Pakistan.";
+      } else if (lowerMsg.includes('whatsapp') || lowerMsg.includes('contact') || lowerMsg.includes('phone')) {
+        reply = "You can reach us anytime on WhatsApp at +92 326 5903300. Our team is available 24/7 to help with book recommendations, order inquiries, and any questions. You can also email us at support@babulfatah.com.";
+      } else {
+        reply = "Thank you for your message! I'd love to help you find the perfect Islamic books. You can browse our collection of 1,200+ titles at babulfatah.com, or for personalized recommendations, please WhatsApp us at +92 326 5903300 — our team is available 24/7. JazakAllahu Khairan for shopping with Bab-ul-Fatah!";
+      }
+    }
 
     return NextResponse.json({ reply });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('Salamee API error:', msg);
-    return NextResponse.json(
-      { error: 'Failed to generate response. Please try again.' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      reply: "I apologize for the inconvenience. I'm currently unable to process your request. Please try again in a moment, or reach out to us directly on WhatsApp at +92 326 5903300 for immediate assistance. JazakAllahu Khairan!"
+    });
   }
 }

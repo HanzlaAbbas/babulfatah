@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, Trash2, ShoppingCart, BookOpen, ArrowLeft, X, Check } from 'lucide-react';
+import { Heart, Trash2, ShoppingCart, BookOpen, ArrowLeft, X, Check, MessageCircle } from 'lucide-react';
 import { useWishlist } from '@/store/use-wishlist';
 import { useCart } from '@/store/use-cart';
 import { useState } from 'react';
@@ -14,6 +13,7 @@ export default function WishlistPage() {
   const { addItem } = useCart();
   const router = useRouter();
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [allAdded, setAllAdded] = useState(false);
 
   const handleAddToCart = (item: typeof items[0]) => {
     addItem({
@@ -24,6 +24,41 @@ export default function WishlistPage() {
     });
     setAddedId(item.productId);
     setTimeout(() => setAddedId(null), 1500);
+  };
+
+  const handleMoveAllToCart = () => {
+    items.forEach((item) => {
+      addItem({
+        productId: item.productId,
+        title: item.title,
+        price: item.price,
+        image: item.image || '',
+      });
+    });
+    setAllAdded(true);
+    setTimeout(() => setAllAdded(false), 2000);
+  };
+
+  const handleWhatsAppOrder = () => {
+    if (items.length === 0) return;
+    const lines = items.map(
+      (item) => `* ${item.title} - Rs. ${item.price.toLocaleString('en-PK')}`
+    );
+    const message = `Assalamu Alaikum! I'm interested in the following books from my wishlist:\n\n${lines.join('\n')}\n\nPlease confirm availability and total amount. JazakAllah!`;
+    window.open(
+      `https://wa.me/+923265903300?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  const handleWhatsAppSingle = (item: typeof items[0]) => {
+    const message = `Assalamu Alaikum! I'm interested in:\n\n* ${item.title}\n* Rs. ${item.price.toLocaleString('en-PK')}\n\nPlease confirm availability.`;
+    window.open(
+      `https://wa.me/+923265903300?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   return (
@@ -68,14 +103,42 @@ export default function WishlistPage() {
           <Heart className="h-20 w-20 text-gray-200 mb-4" />
           <h2 className="text-[18px] font-semibold text-[#1D333B] mb-2">Your wishlist is empty</h2>
           <p className="text-[14px] text-gray-400 max-w-md mb-6">
-            Start adding books you love! Click the heart icon on any product to save it here for later.
+            Start adding books you love! Tap the heart icon on any product to save it here for later.
           </p>
           <Link
             href="/shop"
-            className="bg-[#1D333B] hover:bg-[#142229] text-white text-[14px] font-medium px-6 py-3 transition-colors"
+            className="bg-[#1D333B] hover:bg-[#142229] text-white text-[14px] font-medium px-6 py-3 transition-colors rounded-lg"
           >
             Browse Books
           </Link>
+        </div>
+      )}
+
+      {/* Action Buttons when items exist */}
+      {items.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <button
+            onClick={handleMoveAllToCart}
+            disabled={allAdded}
+            className={`flex-1 h-11 px-5 text-[13px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 rounded-lg ${
+              allAdded
+                ? 'bg-green-500 text-white'
+                : 'bg-[#C9A84C] hover:bg-[#D4B85E] text-[#1D333B]'
+            }`}
+          >
+            {allAdded ? (
+              <><Check className="h-4 w-4" /> All Added to Cart!</>
+            ) : (
+              <><ShoppingCart className="h-4 w-4" /> Move All to Cart</>
+            )}
+          </button>
+          <button
+            onClick={handleWhatsAppOrder}
+            className="flex-1 h-11 px-5 text-[13px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-white transition-colors rounded-lg"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Order All via WhatsApp
+          </button>
         </div>
       )}
 
@@ -85,7 +148,7 @@ export default function WishlistPage() {
           {items.map((item) => (
             <div
               key={item.productId}
-              className="flex items-center gap-4 p-4 border border-gray-100 hover:border-gray-200 transition-colors"
+              className="flex items-center gap-4 p-4 border border-gray-100 hover:border-gray-200 transition-colors rounded-lg"
             >
               {/* Image */}
               <Link href={`/shop/${item.slug}`} className="shrink-0">
@@ -118,7 +181,7 @@ export default function WishlistPage() {
                 <button
                   onClick={() => handleAddToCart(item)}
                   disabled={addedId === item.productId}
-                  className={`h-10 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all duration-300 ${
+                  className={`h-10 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all duration-300 rounded-lg ${
                     addedId === item.productId
                       ? 'bg-[#16a34a] text-white'
                       : 'bg-[#1D333B] hover:bg-[#142229] text-white'
@@ -131,8 +194,15 @@ export default function WishlistPage() {
                   )}
                 </button>
                 <button
+                  onClick={() => handleWhatsAppSingle(item)}
+                  className="h-10 px-3 text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20BD5A] text-white transition-colors rounded-lg"
+                  aria-label="Order via WhatsApp"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                </button>
+                <button
                   onClick={() => removeItem(item.productId)}
-                  className="h-10 w-10 flex items-center justify-center border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                  className="h-10 w-10 flex items-center justify-center border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors rounded-lg"
                   aria-label="Remove from wishlist"
                 >
                   <X className="h-4 w-4" />

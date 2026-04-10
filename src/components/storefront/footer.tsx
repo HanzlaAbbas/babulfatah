@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Facebook,
   Instagram,
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button';
 const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/shop', label: 'Shop All' },
+  { href: '/wishlist', label: 'My Wishlist' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact Us' },
   { href: '/shop?sort=best-selling', label: 'Best Sellers' },
@@ -156,12 +158,18 @@ export function Footer() {
 
       <div className="container mx-auto px-4 md:px-6 py-10 md:py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 lg:gap-8">
-          {/* ── Column 1: Brand ── */}
+          {/* ── Column 1: Brand with Logo ── */}
           <div className="pb-6 lg:pb-0 lg:col-span-2">
             <div className="mb-4">
-              <h3 className="text-xl font-bold text-white inline-block">
-                Bab-ul-Fatah
-              </h3>
+              <Link href="/" className="inline-block mb-3">
+                <Image
+                  src="/logo.png"
+                  alt="Bab-ul-Fatah - Pakistan's Largest Online Islamic Bookstore"
+                  width={160}
+                  height={40}
+                  className="h-10 w-auto rounded brightness-0 invert"
+                />
+              </Link>
               <div className="h-0.5 w-12 bg-golden mt-2 rounded-full" />
             </div>
 
@@ -312,7 +320,9 @@ export function Footer() {
       <div className="border-t border-white/15">
         <div className="container mx-auto px-4 md:px-6 py-5">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white opacity-75">
-            <p>&copy; {new Date().getFullYear()} Bab-ul-Fatah. All rights reserved.</p>
+            <div className="flex items-center gap-2">
+              <p>&copy; {new Date().getFullYear()} Bab-ul-Fatah. All rights reserved.</p>
+            </div>
             <div className="flex items-center gap-3">
               <Link
                 href="/privacy-policy"

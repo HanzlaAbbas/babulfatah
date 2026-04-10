@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Menu,
   ShoppingCart,
@@ -11,7 +12,7 @@ import {
   BookOpen,
   User,
   Search,
-  Star,
+  Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +25,7 @@ import {
 import { CartSheet } from '@/components/storefront/cart-sheet';
 import { SearchBar } from '@/components/storefront/search-bar';
 import { useCart } from '@/store/use-cart';
+import { useWishlist } from '@/store/use-wishlist';
 
 // --- Types --------------------------------------------------------------------
 
@@ -41,13 +43,6 @@ interface CategoryNode {
 const MAX_VISIBLE_CATEGORIES = 7;
 
 // --- Navbar Component ---------------------------------------------------------
-// Premium "Scholar's Library" navbar with:
-//   - Glass-effect sticky header with scroll shadow
-//   - Desktop: Logo (left) + Search (center) + Cart+User (right)
-//   - Horizontal category pill nav with "More ▾" mega-menu
-//   - Mobile: Hamburger (left) + Logo (center) + Cart (right)
-//   - Mobile sheet: accordion categories + static quick links
-// -----------------------------------------------------------------------------
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,6 +56,10 @@ export function Navbar() {
   const cartIsOpen = useCart((s) => s.isOpen);
   const openCart = useCart((s) => s.openCart);
   const closeCart = useCart((s) => s.closeCart);
+  const wishlistItems = useWishlist((s) => s.items);
+  const router = useRouter();
+
+  const wishlistCount = wishlistItems.length;
 
   // -- Scroll shadow effect --
   useEffect(() => {
@@ -125,11 +124,15 @@ export function Navbar() {
   const quickLinks = [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'All Books' },
-    { href: '/shop?category=goodword-books', label: '⭐ Goodword Books' },
-    { href: '/shop?category=iiph', label: '📚 IIPH Books' },
+    { href: '/wishlist', label: 'My Wishlist' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
   ];
+
+  // -- Check if a category slug matches Goodword to avoid duplicates --
+  const hasGoodwordCategory = categoryTree.some(
+    (c) => c.slug === 'goodword-books' || c.name.toLowerCase().includes('goodword')
+  );
 
   return (
     <>
@@ -226,10 +229,10 @@ export function Navbar() {
             <Image
               src="/logo.png"
               alt="Bab-ul-Fatah"
-              width={140}
-              height={35}
+              width={160}
+              height={40}
               priority
-              className="h-9 w-auto rounded"
+              className="h-10 w-auto rounded"
             />
           </Link>
 
@@ -254,6 +257,22 @@ export function Navbar() {
 
           {/* -- Desktop: Right Actions -- */}
           <div className="hidden lg:flex items-center gap-1 shrink-0">
+            {/* Wishlist */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9 text-muted-foreground hover:text-crimson"
+              onClick={() => router.push('/wishlist')}
+            >
+              <Heart className="h-[18px] w-[18px]" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-[16px] min-w-[16px] rounded-full bg-crimson text-[9px] font-bold text-white flex items-center justify-center px-1">
+                  {wishlistCount}
+                </span>
+              )}
+              <span className="sr-only">Wishlist</span>
+            </Button>
+
             {/* User / Account */}
             <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-brand">
               <User className="h-[18px] w-[18px]" />
@@ -277,23 +296,14 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* -- Mobile: Cart (right) -- */}
+          {/* -- Mobile: Right side (search + cart) -- */}
           <div className="flex items-center gap-1 lg:hidden shrink-0 ml-auto">
             {/* Mobile search trigger */}
             <Button
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-muted-foreground"
-              onClick={() => {
-                // Open mobile search by dispatching ⌘K-like event logic
-                const event = new KeyboardEvent('keydown', {
-                  key: 'k',
-                  metaKey: false,
-                  ctrlKey: true,
-                  bubbles: true,
-                });
-                document.dispatchEvent(event);
-              }}
+              onClick={() => router.push('/search')}
             >
               <Search className="h-[18px] w-[18px]" />
               <span className="sr-only">Search</span>
@@ -331,14 +341,15 @@ export function Navbar() {
                   All Books
                 </Link>
 
-                {/* Goodword Books - highlighted publisher pill */}
-                <Link
-                  href="/shop?category=goodword-books"
-                  className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
-                >
-                  <Star className="h-3 w-3" />
-                  Goodword
-                </Link>
+                {/* Goodword Books - highlighted publisher pill (only if not already in category tree) */}
+                {!hasGoodwordCategory && (
+                  <Link
+                    href="/shop?category=goodword-books"
+                    className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    Goodword
+                  </Link>
+                )}
 
                 {/* IIPH Books - highlighted publisher pill */}
                 <Link
@@ -349,8 +360,10 @@ export function Navbar() {
                   IIPH
                 </Link>
 
-                {/* Visible category pills */}
-                {visibleCategories.map((cat) => (
+                {/* Visible category pills — skip any "goodword" category to avoid duplicates */}
+                {visibleCategories
+                  .filter((cat) => !cat.name.toLowerCase().includes('goodword'))
+                  .map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/shop?category=${cat.slug}`}
@@ -459,23 +472,26 @@ export function Navbar() {
                 >
                   All Books
                 </Link>
-                {/* Goodword Books - highlighted publisher pill (mobile) */}
-                <Link
-                  href="/shop?category=goodword-books"
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
-                >
-                  <Star className="h-2.5 w-2.5" />
-                  Goodword
-                </Link>
-                {/* IIPH Books - highlighted publisher pill (mobile) */}
+                {/* Goodword — only show if not already in the tree to avoid duplicate */}
+                {!hasGoodwordCategory && (
+                  <Link
+                    href="/shop?category=goodword-books"
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
+                  >
+                    Goodword
+                  </Link>
+                )}
+                {/* IIPH Books */}
                 <Link
                   href="/shop?category=iiph"
                   className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
                 >
-                  <BookOpen className="h-2.5 w-2.5" />
                   IIPH
                 </Link>
-                {categoryTree.map((cat) => (
+                {/* Category pills — filter out goodword to avoid duplicates */}
+                {categoryTree
+                  .filter((cat) => !cat.name.toLowerCase().includes('goodword'))
+                  .map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/shop?category=${cat.slug}`}
@@ -503,9 +519,6 @@ export function Navbar() {
 }
 
 // --- Mobile Category Accordion -------------------------------------------------
-// Renders nested category tree as a collapsible accordion for the mobile
-// sheet menu. Each level indented with golden accent styling.
-// -----------------------------------------------------------------------------
 
 function MobileCategoryAccordion({
   categories,
