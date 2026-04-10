@@ -1,0 +1,13 @@
+=== PHASE 2: Meta Description Rewrite (14 products) ===
+
+Found 14 products with meta < 130 chars
+
+AI SDK ready
+
+[1/14] 365 Hadith with Stories
+  OLD (122): "Discover 365 Hadith with Stories at Rs. 5,370. authentic narrations with proper chains with fast delivery across Pakistan."
+Failed to make API request: Error: API request failed with status 429: {"error":"Too many requests, please try again later"}
+    at ZAI.createChatCompletion (file:///home/z/my-project/node_modules/z-ai-web-dev-sdk/dist/index.js:100:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async generateMeta (file:///home/z/my-project/scripts/seo-fix-phase2.mjs:37:20)
+    at async main (file:///home/z/my-project/scripts/seo-fix-phase2.mjs:81:21)

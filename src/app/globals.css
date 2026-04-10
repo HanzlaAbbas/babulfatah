@@ -1,0 +1,437 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Bab-ul-Fatah — Premium Design System
+   "The Scholar's Library" — Warm, Trustworthy, Refined
+   Primary: #1D333B (Deep Teal)
+   Accent:  #C9A84C (Islamic Gold)
+   Surface: #F8F6F3 (Warm Off-White)
+   ============================================================ */
+
+@theme inline {
+  /* ── shadcn/ui compatible tokens ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ── Bab-ul-Fatah Brand Tokens ── */
+  --color-brand: #1D333B;
+  --color-brand-light: #2A4A55;
+  --color-brand-dark: #142229;
+  --color-brand-foreground: #FFFFFF;
+  --color-golden: #C9A84C;
+  --color-golden-light: #D4B85E;
+  --color-golden-dark: #A88B3A;
+  --color-golden-hover: #D4B45A;
+  --color-golden-foreground: #1D333B;
+  --color-islamic-green: #1B5E20;
+  --color-islamic-green-light: #2E7D32;
+  --color-surface: #F8F6F3;
+  --color-surface-alt: #F0EDE8;
+  --color-crimson: #DC2626;
+  --font-serif: "Noto Naskh Arabic", "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* ── Core shadcn tokens — Premium warm palette ── */
+  /* Background: warm off-white #F8F6F3 */
+  --background: oklch(0.97 0.004 80);
+  --foreground: oklch(0.17 0.02 220);
+
+  /* Card: pure white for product clarity */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.02 220);
+
+  /* Popover */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.17 0.02 220);
+
+  /* Primary → Brand color #1D333B */
+  --primary: oklch(0.28 0.025 220);
+  --primary-foreground: oklch(0.985 0 0);
+
+  /* Secondary */
+  --secondary: oklch(0.955 0.006 80);
+  --secondary-foreground: oklch(0.28 0.025 220);
+
+  /* Muted */
+  --muted: oklch(0.955 0.006 80);
+  --muted-foreground: oklch(0.48 0.01 220);
+
+  /* Accent → Golden #C9A84C */
+  --accent: oklch(0.74 0.1 82);
+  --accent-foreground: oklch(0.2 0.03 220);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.9 0.008 80);
+  --input: oklch(0.9 0.008 80);
+  --ring: oklch(0.28 0.025 220);
+
+  --chart-1: oklch(0.28 0.025 220);
+  --chart-2: oklch(0.74 0.1 82);
+  --chart-3: oklch(0.5 0.12 160);
+  --chart-4: oklch(0.65 0.08 60);
+  --chart-5: oklch(0.45 0.15 30);
+
+  --sidebar: oklch(0.97 0.006 80);
+  --sidebar-foreground: oklch(0.17 0.02 220);
+  --sidebar-primary: oklch(0.28 0.025 220);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.955 0.006 80);
+  --sidebar-accent-foreground: oklch(0.28 0.025 220);
+  --sidebar-border: oklch(0.9 0.008 80);
+  --sidebar-ring: oklch(0.28 0.025 220);
+}
+
+.dark {
+  --background: oklch(0.14 0.015 220);
+  --foreground: oklch(0.93 0.01 220);
+
+  --card: oklch(0.18 0.02 220);
+  --card-foreground: oklch(0.93 0.01 220);
+
+  --popover: oklch(0.18 0.02 220);
+  --popover-foreground: oklch(0.93 0.01 220);
+
+  --primary: oklch(0.75 0.1 82);
+  --primary-foreground: oklch(0.14 0.015 220);
+
+  --secondary: oklch(0.25 0.02 220);
+  --secondary-foreground: oklch(0.93 0.01 220);
+
+  --muted: oklch(0.25 0.02 220);
+  --muted-foreground: oklch(0.65 0.015 220);
+
+  --accent: oklch(0.35 0.025 220);
+  --accent-foreground: oklch(0.93 0.01 220);
+
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.75 0.1 82);
+
+  --chart-1: oklch(0.75 0.1 82);
+  --chart-2: oklch(0.65 0.12 160);
+  --chart-3: oklch(0.55 0.15 30);
+  --chart-4: oklch(0.7 0.08 60);
+  --chart-5: oklch(0.45 0.2 270);
+
+  --sidebar: oklch(0.18 0.02 220);
+  --sidebar-foreground: oklch(0.93 0.01 220);
+  --sidebar-primary: oklch(0.75 0.1 82);
+  --sidebar-primary-foreground: oklch(0.14 0.015 220);
+  --sidebar-accent: oklch(0.25 0.02 220);
+  --sidebar-accent-foreground: oklch(0.93 0.01 220);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.75 0.1 82);
+}
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ============================================================
+   Premium Utility Classes
+   ============================================================ */
+
+@layer utilities {
+  /* Hide scrollbar */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Premium card shadow — subtle warm */
+  .shadow-premium {
+    box-shadow: 0 1px 3px rgba(29, 51, 59, 0.04),
+                0 4px 12px rgba(29, 51, 59, 0.06),
+                0 0 0 1px rgba(29, 51, 59, 0.03);
+  }
+
+  /* Elevated card shadow — for hover */
+  .shadow-elevated {
+    box-shadow: 0 4px 12px rgba(29, 51, 59, 0.08),
+                0 12px 32px rgba(29, 51, 59, 0.1),
+                0 0 0 1px rgba(29, 51, 59, 0.04);
+  }
+
+  /* Golden glow effect */
+  .shadow-golden {
+    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.25),
+                0 0 0 1px rgba(201, 168, 76, 0.15);
+  }
+
+  /* Premium text gradient */
+  .text-gradient-golden {
+    background: linear-gradient(135deg, #C9A84C, #D4B85E, #A88B3A);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass effect */
+  .glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255, 255, 255, 0.85);
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(29, 51, 59, 0.15);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(29, 51, 59, 0.25);
+  }
+
+  /* Snap scroll */
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .snap-center {
+    scroll-snap-align: center;
+  }
+  .snap-start {
+    scroll-snap-align: start;
+  }
+}
+
+/* ============================================================
+   Premium Keyframe Animations
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes toast-slide-in {
+  0% { transform: translateX(120%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-slide-out {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+@keyframes wa-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+@keyframes kenBurns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+/* Animation utility classes */
+.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+.animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+.animate-fade-in-down { animation: fadeInDown 0.4s ease-out forwards; }
+.animate-slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+.animate-slide-in-left { animation: slideInLeft 0.3s ease-out forwards; }
+.animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+.animate-pulse-slow { animation: pulseSlow 2s ease-in-out infinite; }
+.animate-marquee { animation: marquee 18s linear infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-ken-burns { animation: kenBurns 20s ease-out forwards; }
+.wa-pulse { animation: wa-pulse 2s ease-in-out infinite; }
+.wa-pulse:hover { animation: none; }
+.toast-enter { animation: toast-slide-in 0.4s ease-out forwards; }
+.toast-exit { animation: toast-slide-out 0.4s ease-in forwards; }
+
+/* ============================================================
+   Scroll-Triggered Animations (darussalam.pk style)
+   
+   Elements with [data-animate] are VISIBLE by default.
+   Once JS adds .js-ready to <html>, they hide and animate in.
+   This ensures content is never invisible due to JS failures.
+   ============================================================ */
+
+[data-animate] {
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Only hide when JS is ready to animate */
+html.js-ready [data-animate]:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(24px);
+}
+html.js-ready [data-animate="slide-right"]:not(.is-visible) {
+  transform: translateX(-30px);
+}
+html.js-ready [data-animate="scale"]:not(.is-visible) {
+  transform: scale(0.95);
+}
+
+/* Visible state */
+[data-animate].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-animate="slide-right"].is-visible {
+  transform: translateX(0);
+}
+[data-animate="scale"].is-visible {
+  transform: scale(1);
+}
+
+/* Stagger children animations */
+[data-animate-stagger] > [data-animate]:nth-child(1) { transition-delay: 0ms; }
+[data-animate-stagger] > [data-animate]:nth-child(2) { transition-delay: 80ms; }
+[data-animate-stagger] > [data-animate]:nth-child(3) { transition-delay: 160ms; }
+[data-animate-stagger] > [data-animate]:nth-child(4) { transition-delay: 240ms; }
+[data-animate-stagger] > [data-animate]:nth-child(5) { transition-delay: 320ms; }
+[data-animate-stagger] > [data-animate]:nth-child(6) { transition-delay: 400ms; }
+[data-animate-stagger] > [data-animate]:nth-child(7) { transition-delay: 480ms; }
+[data-animate-stagger] > [data-animate]:nth-child(8) { transition-delay: 560ms; }
+[data-animate-stagger] > [data-animate]:nth-child(9) { transition-delay: 640ms; }
+[data-animate-stagger] > [data-animate]:nth-child(10) { transition-delay: 720ms; }
+[data-animate-stagger] > [data-animate]:nth-child(11) { transition-delay: 800ms; }
+[data-animate-stagger] > [data-animate]:nth-child(12) { transition-delay: 880ms; }
+
+/* Hide scrollbar for horizontal scroll sections */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

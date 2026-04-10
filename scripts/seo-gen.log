@@ -1,0 +1,22 @@
+============================================================
+  Bab-ul-Fatah AI SEO Description Generator
+  Processing Goodword + IIPH Products
+============================================================
+
+IIPH scraped descriptions: 85/85
+Goodword scraped descriptions: 54
+
+Goodword products in DB: 58
+IIPH products in DB: 85
+Total to process: 143
+
+------------------------------------------------------------
+  Processing IIPH Products (85)
+------------------------------------------------------------
+[1/85] A Guide to Male Female Interaction in Isla Failed to make API request: Error: API request failed with status 401: {"error":"missing X-Token header"}
+    at ZAI.createChatCompletion (file:///home/z/my-project/node_modules/z-ai-web-dev-sdk/dist/index.js:100:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async generateDescription (/home/z/my-project/scripts/generate-seo-descriptions.ts:103:22)
+    at async processBatch (/home/z/my-project/scripts/generate-seo-descriptions.ts:133:20)
+    at async main (/home/z/my-project/scripts/generate-seo-descriptions.ts:197:23)
+ERR: API request failed with status 401: {"error":"miss

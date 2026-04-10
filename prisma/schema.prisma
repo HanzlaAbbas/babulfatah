@@ -1,0 +1,151 @@
+// ============================================================
+// Bab-ul-Fatah — Islamic E-Commerce Platform
+// Prisma Schema v1.0 (Phase 1)
+// ============================================================
+// Production: PostgreSQL on Neon.tech
+// Local Dev:  switch provider to "sqlite" for zero-config dev
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum Language {
+  URDU
+  ARABIC
+  ENGLISH
+  PUNJABI
+  SPANISH
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// ── User ─────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Author ───────────────────────────────────────────────────
+
+model Author {
+  id       String    @id @default(uuid())
+  name     String
+  products Product[]
+}
+
+// ── Category (self-referencing tree) ─────────────────────────
+
+model Category {
+  id            String     @id @default(uuid())
+  name          String
+  slug          String
+  parentId      String?
+  parent        Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryToCategory")
+  products      Product[]
+
+  @@unique([slug, parentId])
+}
+
+// ── Product ──────────────────────────────────────────────────
+
+model Product {
+  id              String    @id @default(uuid())
+  title           String
+  slug            String    @unique
+  description     String
+  metaDescription String?
+  price           Float
+  stock           Int       @default(0)
+  weight          Float?
+  tags            String?
+  sku             String?   @unique
+  authorId        String?
+  author          Author?   @relation(fields: [authorId], references: [id])
+  language        Language  @default(URDU)
+  images          Image[]
+  categoryId      String
+  category        Category  @relation(fields: [categoryId], references: [id])
+  orderItems      OrderItem[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+}
+
+// ── Image ────────────────────────────────────────────────────
+
+model Image {
+  id        String  @id @default(uuid())
+  url       String
+  altText   String?
+  order     Int     @default(0)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, order])
+}
+
+// ── Order ────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  customerName    String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Float
+  shippingCity    String
+  shippingAddress String
+  contactPhone    String
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+// ── OrderItem ────────────────────────────────────────────────
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+// ── Newsletter ───────────────────────────────────────────────
+
+model Newsletter {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
