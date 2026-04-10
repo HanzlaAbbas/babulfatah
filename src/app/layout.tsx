@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Bab-ul-Fatah" }],
   icons: {
-    icon: "/logo.svg",
+    icon: "/logo.png",
   },
   openGraph: {
     title: "Bab-ul-Fatah — Premium Islamic E-Commerce",
