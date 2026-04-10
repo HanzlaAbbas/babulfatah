@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, RefreshCw } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/button';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -12,14 +11,13 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  isError?: boolean;
-  retryMessage?: string;
 }
 
 // ─── Salamee AI Chat Widget ───────────────────────────────────────────────────
 // Floating AI chatbot for Bab-ul-Fatah Islamic bookstore.
 // Renders via React Portal to document.body for guaranteed bottom positioning.
-// Mobile: bottom sheet (85vh). Desktop: bottom-right panel (380px).
+// MOBILE: bottom-right floating button (parallel to WhatsApp bottom-left).
+// DESKTOP: bottom-right floating button (parallel to WhatsApp bottom-left).
 // ───────────────────────────────────────────────────────────────────────────────
 
 export function SalameeChat() {
@@ -79,17 +77,12 @@ export function SalameeChat() {
     setIsLoading(true);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
       const res = await fetch('/api/salamee', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed }),
-        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
       const data = await res.json();
 
       if (data.reply) {
@@ -101,32 +94,32 @@ export function SalameeChat() {
             content: data.reply,
           },
         ]);
-      } else {
-        const errorMsg = data.error || data.message || "Sorry, I couldn't process that. Please try again.";
+      } else if (data.error) {
         setMessages((prev) => [
           ...prev,
           {
             id: `error-${Date.now()}`,
             role: 'assistant',
-            content: errorMsg,
-            isError: true,
-            retryMessage: trimmed,
+            content: data.error,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            role: 'assistant',
+            content: "Sorry, I couldn't process that. Please try again.",
           },
         ]);
       }
-    } catch (err) {
-      const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-      const errorMsg = isTimeout
-        ? 'Request timed out. The AI assistant took too long to respond. Please try again.'
-        : 'Network error. Please check your connection and try again.';
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: errorMsg,
-          isError: true,
-          retryMessage: trimmed,
+          content: 'Network error. Please check your connection and try again.',
         },
       ]);
     } finally {
@@ -144,71 +137,63 @@ export function SalameeChat() {
     [handleSend]
   );
 
-  const handleRetry = useCallback(
-    (retryMessage: string) => {
-      // Remove the error message from the list
-      setMessages((prev) => prev.filter((m) => m.id !== `error-${m.id}` || !m.isError));
-      // Re-add user message and set input to trigger a fresh send
-      const userMsg: ChatMessage = {
-        id: `user-retry-${Date.now()}`,
-        role: 'user',
-        content: retryMessage,
-      };
-      setMessages((prev) => [...prev.filter((m) => !m.isError), userMsg]);
-      setInput(retryMessage);
-      setIsLoading(true);
-
-      // Direct fetch call to avoid dependency on stale input state
-      (async () => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-          const res = await fetch('/api/salamee', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: retryMessage }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
-
-          if (data.reply) {
-            setMessages((prev) => [
-              ...prev.filter((m) => m.id !== userMsg.id || m.role !== 'assistant'),
-              { id: `ai-${Date.now()}`, role: 'assistant', content: data.reply },
-            ]);
-          } else {
-            const errorMsg = data.error || data.message || "Sorry, I couldn't process that. Please try again.";
-            setMessages((prev) => [
-              ...prev,
-              { id: `error-${Date.now()}`, role: 'assistant', content: errorMsg, isError: true, retryMessage: retryMessage },
-            ]);
-          }
-        } catch (err) {
-          const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-          const errorMsg = isTimeout
-            ? 'Request timed out. Please try again.'
-            : 'Network error. Please check your connection and try again.';
-          setMessages((prev) => [
-            ...prev,
-            { id: `error-${Date.now()}`, role: 'assistant', content: errorMsg, isError: true, retryMessage: retryMessage },
-          ]);
-        } finally {
-          setIsLoading(false);
-          setInput('');
-        }
-      })();
-    },
-    []
-  );
-
   if (!mounted) return null;
 
   return createPortal(
     <>
-      {/* ═══ Floating Open Button — bottom-right ═══ */}
+      {/* ═══ Floating Open Button — bottom-right (parallel to WhatsApp bottom-left) ═══ */}
       {!isOpen && (
         <div style={{ position: 'fixed', bottom: 24, right: 20, zIndex: 99999 }}>
+          {/* Tooltip on hover */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: 0,
+              marginBottom: 10,
+              opacity: 0,
+              transition: 'opacity 0.2s ease',
+              pointerEvents: 'none',
+            }}
+            className="group-hover:opacity-100"
+            id="salamee-tooltip"
+            onMouseEnter={(e) => {
+              const tooltip = document.getElementById('salamee-tooltip');
+              if (tooltip) tooltip.style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              const tooltip = document.getElementById('salamee-tooltip');
+              if (tooltip) tooltip.style.opacity = '0';
+            }}
+          >
+            <div
+              style={{
+                background: '#142229',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 500,
+                padding: '6px 12px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Chat with Salamee AI
+            </div>
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid #142229',
+                marginTop: -1,
+                marginLeft: 'auto',
+                marginRight: 12,
+              }}
+            />
+          </div>
+
           <button
             onClick={() => setIsOpen(true)}
             aria-label="Open Salamee AI Chat"
@@ -226,6 +211,18 @@ export function SalameeChat() {
               border: 'none',
               cursor: 'pointer',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              const btn = e.currentTarget;
+              btn.style.boxShadow = '0 6px 24px rgba(29,51,59,0.45), 0 0 0 3px rgba(201,168,76,0.25)';
+              const tooltip = document.getElementById('salamee-tooltip');
+              if (tooltip) tooltip.style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              const btn = e.currentTarget;
+              btn.style.boxShadow = '0 4px 16px rgba(29,51,59,0.3), 0 0 0 3px rgba(201,168,76,0.15)';
+              const tooltip = document.getElementById('salamee-tooltip');
+              if (tooltip) tooltip.style.opacity = '0';
             }}
           >
             <SalameeIcon size={28} />
@@ -360,38 +357,14 @@ export function SalameeChat() {
                       padding: '10px 14px',
                       fontSize: 13,
                       lineHeight: 1.6,
-                      background: msg.role === 'user' ? '#1D333B' : (msg.isError ? '#FEF2F2' : '#F8F6F3'),
-                      color: msg.role === 'user' ? '#fff' : (msg.isError ? '#DC2626' : '#1D333B'),
+                      background: msg.role === 'user' ? '#1D333B' : '#F8F6F3',
+                      color: msg.role === 'user' ? '#fff' : '#1D333B',
                       borderBottomRightRadius: msg.role === 'user' ? 6 : 16,
                       borderBottomLeftRadius: msg.role === 'user' ? 16 : 6,
-                      border: msg.role === 'assistant' ? (msg.isError ? '1px solid rgba(220,38,38,0.15)' : '1px solid rgba(0,0,0,0.06)') : 'none',
+                      border: msg.role === 'assistant' ? '1px solid rgba(0,0,0,0.06)' : 'none',
                     }}
                   >
                     {msg.content}
-                    {msg.isError && msg.retryMessage && (
-                      <button
-                        onClick={() => handleRetry(msg.retryMessage!)}
-                        disabled={isLoading}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          marginTop: 8,
-                          padding: '4px 10px',
-                          borderRadius: 8,
-                          background: 'rgba(220,38,38,0.08)',
-                          border: '1px solid rgba(220,38,38,0.2)',
-                          color: '#DC2626',
-                          fontSize: 11,
-                          fontWeight: 600,
-                          cursor: isLoading ? 'not-allowed' : 'pointer',
-                          opacity: isLoading ? 0.5 : 1,
-                        }}
-                      >
-                        <RefreshCw style={{ width: 11, height: 11 }} />
-                        Retry
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -451,15 +424,28 @@ export function SalameeChat() {
                     outline: 'none',
                   }}
                 />
-                <Button
-                  size="icon"
+                <button
                   onClick={handleSend}
                   disabled={isLoading || !input.trim()}
-                  style={{ width: 40, height: 40, borderRadius: '50%', background: '#1D333B', flexShrink: 0 }}
                   aria-label="Send message"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: (!input.trim() || isLoading) ? '#94a3b8' : '#1D333B',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: (!input.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                    flexShrink: 0,
+                    transition: 'background 0.2s ease',
+                    opacity: (!input.trim() || isLoading) ? 0.6 : 1,
+                  }}
                 >
                   <Send style={{ width: 16, height: 16 }} />
-                </Button>
+                </button>
               </div>
               <p style={{ fontSize: 10, textAlign: 'center', color: 'rgba(100,116,139,0.5)', marginTop: 8 }}>
                 Powered by Salamee AI — Bab-ul-Fatah

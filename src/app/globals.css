@@ -73,31 +73,24 @@
   --radius: 0.75rem;
 
   /* ── Core shadcn tokens — Premium warm palette ── */
-  /* Background: warm off-white #F8F6F3 */
   --background: oklch(0.97 0.004 80);
   --foreground: oklch(0.17 0.02 220);
 
-  /* Card: pure white for product clarity */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.17 0.02 220);
 
-  /* Popover */
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.17 0.02 220);
 
-  /* Primary → Brand color #1D333B */
   --primary: oklch(0.28 0.025 220);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Secondary */
   --secondary: oklch(0.955 0.006 80);
   --secondary-foreground: oklch(0.28 0.025 220);
 
-  /* Muted */
   --muted: oklch(0.955 0.006 80);
   --muted-foreground: oklch(0.48 0.01 220);
 
-  /* Accent → Golden #C9A84C */
   --accent: oklch(0.74 0.1 82);
   --accent-foreground: oklch(0.2 0.03 220);
 
@@ -178,9 +171,30 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
+  }
+}
+
+/* ============================================================
+   Button Contrast Safety — Prevent white-on-white buttons
+   Ensures all button-like elements have visible text.
+   ============================================================ */
+
+@layer base {
+  /* Force readable text on any button with light background */
+  button, [role="button"], .btn, a[class*="rounded"] {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Outline buttons must have visible text */
+  [data-slot="button"][class*="outline"] {
+    color: oklch(0.28 0.025 220);
+  }
+
+  /* Ghost buttons should inherit text color, not be white */
+  [data-slot="button"][class*="ghost"] {
+    color: oklch(0.48 0.01 220);
   }
 }
 
@@ -189,7 +203,6 @@
    ============================================================ */
 
 @layer utilities {
-  /* Hide scrollbar */
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
@@ -198,27 +211,23 @@
     scrollbar-width: none;
   }
 
-  /* Premium card shadow — subtle warm */
   .shadow-premium {
     box-shadow: 0 1px 3px rgba(29, 51, 59, 0.04),
                 0 4px 12px rgba(29, 51, 59, 0.06),
                 0 0 0 1px rgba(29, 51, 59, 0.03);
   }
 
-  /* Elevated card shadow — for hover */
   .shadow-elevated {
     box-shadow: 0 4px 12px rgba(29, 51, 59, 0.08),
                 0 12px 32px rgba(29, 51, 59, 0.1),
                 0 0 0 1px rgba(29, 51, 59, 0.04);
   }
 
-  /* Golden glow effect */
   .shadow-golden {
     box-shadow: 0 4px 16px rgba(201, 168, 76, 0.25),
                 0 0 0 1px rgba(201, 168, 76, 0.15);
   }
 
-  /* Premium text gradient */
   .text-gradient-golden {
     background: linear-gradient(135deg, #C9A84C, #D4B85E, #A88B3A);
     -webkit-background-clip: text;
@@ -226,13 +235,11 @@
     background-clip: text;
   }
 
-  /* Glass effect */
   .glass {
     backdrop-filter: blur(16px) saturate(180%);
     background: rgba(255, 255, 255, 0.85);
   }
 
-  /* Scrollbar styling */
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -248,7 +255,6 @@
     background: rgba(29, 51, 59, 0.25);
   }
 
-  /* Snap scroll */
   .snap-x-mandatory {
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
@@ -366,6 +372,11 @@
   100% { transform: scale(1.08); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Animation utility classes */
 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
@@ -374,7 +385,7 @@
 .animate-slide-in-left { animation: slideInLeft 0.3s ease-out forwards; }
 .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
 .animate-pulse-slow { animation: pulseSlow 2s ease-in-out infinite; }
-.animate-marquee { animation: marquee 6s linear infinite; }
+.animate-marquee { animation: marquee 18s linear infinite; }
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-ken-burns { animation: kenBurns 20s ease-out forwards; }
 .wa-pulse { animation: wa-pulse 2s ease-in-out infinite; }
@@ -384,17 +395,12 @@
 
 /* ============================================================
    Scroll-Triggered Animations (darussalam.pk style)
-   
-   Elements with [data-animate] are VISIBLE by default.
-   Once JS adds .js-ready to <html>, they hide and animate in.
-   This ensures content is never invisible due to JS failures.
    ============================================================ */
 
 [data-animate] {
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Only hide when JS is ready to animate */
 html.js-ready [data-animate]:not(.is-visible) {
   opacity: 0;
   transform: translateY(24px);
@@ -406,7 +412,6 @@ html.js-ready [data-animate="scale"]:not(.is-visible) {
   transform: scale(0.95);
 }
 
-/* Visible state */
 [data-animate].is-visible {
   opacity: 1;
   transform: translateY(0);
@@ -418,7 +423,6 @@ html.js-ready [data-animate="scale"]:not(.is-visible) {
   transform: scale(1);
 }
 
-/* Stagger children animations */
 [data-animate-stagger] > [data-animate]:nth-child(1) { transition-delay: 0ms; }
 [data-animate-stagger] > [data-animate]:nth-child(2) { transition-delay: 80ms; }
 [data-animate-stagger] > [data-animate]:nth-child(3) { transition-delay: 160ms; }
@@ -432,6 +436,5 @@ html.js-ready [data-animate="scale"]:not(.is-visible) {
 [data-animate-stagger] > [data-animate]:nth-child(11) { transition-delay: 800ms; }
 [data-animate-stagger] > [data-animate]:nth-child(12) { transition-delay: 880ms; }
 
-/* Hide scrollbar for horizontal scroll sections */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
