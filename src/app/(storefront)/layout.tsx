@@ -6,8 +6,7 @@ import { FlashSaleBanner } from '@/components/storefront/flash-sale-banner';
 import { BackToTop } from '@/components/storefront/back-to-top';
 import { NewsletterPopup } from '@/components/storefront/newsletter-popup';
 import { SocialProofToast } from '@/components/storefront/social-proof-toast';
-import { SalameeChat } from '@/components/storefront/salamee-chat';
-import { MobileBottomNav } from '@/components/storefront/mobile-bottom-nav';
+import { AIAssistant } from '@/components/storefront/ai-assistant';
 
 export default function StorefrontLayout({
   children,
@@ -18,15 +17,14 @@ export default function StorefrontLayout({
     <div className="flex min-h-screen flex-col">
       <FlashSaleBanner />
       <Navbar />
-      <main className="flex-1 pb-[72px] lg:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       <RecentlyViewedSection />
       <Footer />
-      <MobileBottomNav />
       <WhatsAppFloat />
       <BackToTop />
       <NewsletterPopup />
       <SocialProofToast />
-      <SalameeChat />
+      <AIAssistant />
     </div>
   );
 }
