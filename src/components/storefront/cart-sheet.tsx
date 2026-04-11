@@ -1,10 +1,15 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Minus, Plus, Trash2, BookOpen, MessageCircle, AlertTriangle } from 'lucide-react';
+import {
+  ShoppingCart, Minus, Plus, Trash2, BookOpen, MessageCircle,
+  AlertTriangle, Tag, X, Check, Loader2,
+} from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -21,8 +26,53 @@ interface CartSheetProps {
 }
 
 export function CartSheet({ open, onOpenChange }: CartSheetProps) {
-  const { items, removeItem, updateQuantity, totalPrice, totalItems } = useCart();
+  const {
+    items, removeItem, updateQuantity, totalPrice, totalItems,
+    discountAmount, finalPrice, coupon,
+    applyCoupon, removeCoupon,
+  } = useCart();
   const router = useRouter();
+
+  const [couponInput, setCouponInput] = useState('');
+  const [couponStatus, setCouponStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
+  const [couponMsg, setCouponMsg] = useState('');
+
+  const handleApplyCoupon = useCallback(async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+
+    setCouponStatus('loading');
+    setCouponMsg('');
+
+    try {
+      const res = await fetch('/api/storefront/coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await res.json();
+
+      if (data.valid) {
+        setCouponStatus('success');
+        setCouponMsg(`${data.discountPercent}% off applied!`);
+        applyCoupon(data.code, data.discountPercent);
+        setCouponInput('');
+      } else {
+        setCouponStatus('error');
+        setCouponMsg(data.message);
+      }
+    } catch {
+      setCouponStatus('error');
+      setCouponMsg('Network error. Please try again.');
+    }
+  }, [couponInput, applyCoupon]);
+
+  const handleRemoveCoupon = useCallback(() => {
+    removeCoupon();
+    setCouponStatus('idle');
+    setCouponMsg('');
+  }, [removeCoupon]);
 
   const handleCheckout = () => {
     onOpenChange(false);
@@ -32,12 +82,23 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   const buildWhatsAppUrl = () => {
     const lines = items.map(
       (item) =>
-        `• ${item.title} x${item.quantity} — Rs. ${(item.price * item.quantity).toLocaleString('en-PK')}`
+        `* ${item.title} x${item.quantity} — Rs. ${(item.price * item.quantity).toLocaleString('en-PK')}`
     );
     const subtotal = totalPrice().toLocaleString('en-PK');
-    const message = `Assalamu Alaikum! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: Rs. ${subtotal}`;
+    const discount = discountAmount();
+    let message = `Assalamu Alaikum! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: Rs. ${subtotal}`;
+    if (discount > 0) {
+      message += `\nDiscount (${coupon?.discountPercent}%): -Rs. ${discount.toLocaleString('en-PK')}`;
+      message += `\n**Total: Rs. ${finalPrice().toLocaleString('en-PK')}**`;
+      message += `\nCoupon: ${coupon?.code}`;
+    }
     return `https://wa.me/+923265903300?text=${encodeURIComponent(message)}`;
   };
+
+  const subtotal = totalPrice();
+  const discount = discountAmount();
+  const total = finalPrice();
+  const hasDiscount = discount > 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -164,21 +225,101 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
         {items.length > 0 && (
           <>
             <Separator />
-            <SheetFooter className="px-6 py-5 flex-col gap-4 sm:flex-col">
-              <div className="flex items-center justify-between w-full">
-                <span className="text-sm text-muted-foreground">Subtotal</span>
-                <span className="text-lg font-bold text-foreground">
-                  Rs. {totalPrice().toLocaleString('en-PK')}
-                </span>
+
+            {/* ── Coupon Section ── */}
+            <div className="px-6 py-3">
+              {coupon ? (
+                /* Applied coupon badge */
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-bold text-green-700">{coupon.code}</span>
+                    <span className="text-xs text-green-600">({coupon.discountPercent}% off)</span>
+                  </div>
+                  <button
+                    onClick={handleRemoveCoupon}
+                    className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-green-100 text-green-500 hover:text-green-700 transition-colors"
+                    aria-label="Remove coupon"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                /* Coupon input */
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Discount code"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        setCouponStatus('idle');
+                        setCouponMsg('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleApplyCoupon();
+                      }}
+                      className="h-9 text-sm font-mono tracking-wider placeholder:normal-case"
+                      maxLength={20}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-3 text-xs font-semibold text-brand border-brand/20 hover:bg-brand/5 shrink-0"
+                      onClick={handleApplyCoupon}
+                      disabled={couponStatus === 'loading' || !couponInput.trim()}
+                    >
+                      {couponStatus === 'loading' ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        'Apply'
+                      )}
+                    </Button>
+                  </div>
+                  {couponMsg && (
+                    <p className={`text-xs flex items-center gap-1 ${
+                      couponStatus === 'error' ? 'text-red-500' : 'text-green-600'
+                    }`}>
+                      {couponStatus === 'success' && <Check className="h-3 w-3 shrink-0" />}
+                      {couponMsg}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            <SheetFooter className="px-6 py-5 flex-col gap-3 sm:flex-col">
+              {/* Price breakdown */}
+              <div className="w-full space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Subtotal</span>
+                  <span className="text-sm text-foreground tabular-nums">
+                    Rs. {subtotal.toLocaleString('en-PK')}
+                  </span>
+                </div>
+                {hasDiscount && (
+                  <div className="flex items-center justify-between text-green-600">
+                    <span className="text-sm flex items-center gap-1">
+                      <Tag className="h-3.5 w-3.5" />
+                      Discount ({coupon?.discountPercent}%)
+                    </span>
+                    <span className="text-sm font-medium tabular-nums">
+                      -Rs. {discount.toLocaleString('en-PK')}
+                    </span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-base font-bold text-foreground">Total</span>
+                  <span className="text-lg font-bold text-foreground tabular-nums">
+                    Rs. {total.toLocaleString('en-PK')}
+                  </span>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                className="w-full h-10 rounded-xl border-brand/20 text-brand hover:bg-brand/5 font-medium text-sm transition-colors"
-                onClick={() => onOpenChange(false)}
-                asChild
-              >
-                <Link href="/shop">Continue Shopping</Link>
-              </Button>
+
               <Button
                 className="w-full h-12 rounded-xl bg-golden hover:bg-golden-light text-golden-foreground font-semibold text-sm transition-colors"
                 onClick={handleCheckout}

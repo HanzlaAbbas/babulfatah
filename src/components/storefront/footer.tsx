@@ -14,6 +14,8 @@ import {
   MessageCircle,
   Send,
   ChevronDown,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -116,6 +118,8 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
   async function handleNewsletterSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -135,9 +139,12 @@ export function Footer() {
 
       if (data.success) {
         setStatus('success');
-        setMessage(data.message);
+        setMessage(data.message || 'Subscribed successfully!');
         setEmail('');
-        setTimeout(() => setStatus('idle'), 4000);
+        if (data.couponCode) {
+          setCouponCode(data.couponCode);
+        }
+        setTimeout(() => setStatus('idle'), 8000);
       } else {
         setStatus('error');
         setMessage(data.message || 'Subscription failed. Please try again.');
@@ -199,9 +206,12 @@ export function Footer() {
 
             {/* ── Newsletter ── */}
             <div className="mt-6 lg:mt-8">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-golden mb-3">
-                Subscribe to Newsletter
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-golden mb-1">
+                Get 10% Off
               </h4>
+              <p className="text-[12px] text-white/50 mb-3">
+                Subscribe & get an instant discount code
+              </p>
               <form
                 onSubmit={handleNewsletterSubmit}
                 className="flex gap-2 max-w-xs"
@@ -214,6 +224,7 @@ export function Footer() {
                   disabled={status === 'loading'}
                   className="h-10 min-w-0 bg-white/10 border-white/15 text-white placeholder:text-white/45 text-sm rounded-lg focus:border-golden/40 focus:ring-golden/20"
                   required
+                  autoComplete="email"
                 />
                 <Button
                   type="submit"
@@ -224,10 +235,33 @@ export function Footer() {
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
-              {message && (
+              {message && !couponCode && (
                 <p className={`text-[11px] mt-2 ${status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
                   {message}
                 </p>
+              )}
+              {couponCode && (
+                <div className="mt-3 bg-white/10 border border-white/15 rounded-lg px-3 py-2.5">
+                  <p className="text-[11px] text-white/60 mb-1">Your discount code:</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-bold font-mono text-golden tracking-wider">
+                      {couponCode}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(couponCode);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        } catch { /* ignore */ }
+                      }}
+                      className="h-6 w-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+                      aria-label="Copy code"
+                    >
+                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>

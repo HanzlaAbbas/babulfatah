@@ -147,5 +147,21 @@ model Newsletter {
   id        String   @id @default(uuid())
   email     String   @unique
   active    Boolean  @default(true)
+  coupons   Coupon[]
   createdAt DateTime @default(now())
+}
+
+// ── Coupon ──────────────────────────────────────────────────
+// Auto-generated on newsletter signup. Single-use, 10% off.
+
+model Coupon {
+  id          String   @id @default(uuid())
+  code        String   @unique  // e.g. WELCOME-A8F3K2
+  type        String   @default("PERCENTAGE") // PERCENTAGE | FIXED
+  value       Float    @default(10)           // 10 = 10%
+  used        Boolean  @default(false)
+  usedAt      DateTime?
+  email       String                    // which email earned it
+  newsletter  Newsletter @relation(fields: [email], references: [email])
+  createdAt   DateTime @default(now())
 }
