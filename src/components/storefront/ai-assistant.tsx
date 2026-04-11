@@ -6,16 +6,13 @@ import { createPortal } from 'react-dom';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Bab-ul-Fatah AI Assistant — Premium Chat Widget
+// Bab-ul-Fatah AI Assistant — Premium Chat Widget v2 (Fixed)
 // ─────────────────────────────────────────────────────────────────────────────────
-// Features:
-// - Real-time streaming responses (character by character)
-// - Multi-turn conversation with memory
-// - Quick-action buttons for common queries
-// - Markdown-like bold rendering
-// - Mobile bottom-sheet / Desktop side-panel
-// - Smooth animations and micro-interactions
-// - Brand-matched to Bab-ul-Fatah design system
+// Fix from v1:
+// - Uses messagesRef to avoid stale closure in handleSend
+// - Non-streaming JSON responses (no SSE parsing)
+// - Correct conversation history passed to API
+// - Each message gets a unique, contextual AI response
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,7 +40,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Hadith Books', icon: '📜', query: 'Show me your Hadith collection' },
 ];
 
-// ─── Simple markdown renderer (bold only, no external deps) ────────────────────
+// ─── Simple markdown renderer (bold only) ────────────────────────────────────
 
 function renderMarkdown(text: string): React.ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -55,7 +52,6 @@ function renderMarkdown(text: string): React.ReactNode[] {
         </strong>
       );
     }
-    // Handle newlines
     return part.split('\n').map((line, j) => (
       <span key={`${i}-${j}`}>
         {j > 0 && <br />}
@@ -75,10 +71,19 @@ export function AIAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
+
+  // KEY FIX: Use a ref to always have the latest messages
+  // This prevents the stale closure bug where handleSend captured old messages
+  const messagesRef = useRef<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasInitialized = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Keep messagesRef in sync with state
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     setMounted(true);
@@ -103,18 +108,19 @@ export function AIAssistant() {
   useEffect(() => {
     if (isOpen && !hasInitialized.current) {
       hasInitialized.current = true;
-      setMessages([
-        {
-          id: 'welcome',
-          role: 'assistant',
-          content:
-            "Assalamu Alaikum! Welcome to Bab-ul-Fatah. I'm your AI assistant — here to help you find the perfect Islamic books and products. Ask me anything about our collection, shipping, or Islamic knowledge!",
-        },
-      ]);
+      const welcomeMsg: ChatMessage = {
+        id: 'welcome',
+        role: 'assistant',
+        content:
+          "Assalamu Alaikum! Welcome to Bab-ul-Fatah. I'm your AI assistant — here to help you find the perfect Islamic books and products. Ask me anything about our collection, shipping, or Islamic knowledge!",
+      };
+      setMessages([welcomeMsg]);
+      messagesRef.current = [welcomeMsg];
     }
   }, [isOpen]);
 
-  // ── Streaming send handler ──
+  // ── Send handler (NO stale closure) ──
+  // Uses messagesRef instead of messages state to always get latest data
   const handleSend = useCallback(async (queryOverride?: string) => {
     const trimmed = (queryOverride || input).trim();
     if (!trimmed || isLoading) return;
@@ -125,21 +131,26 @@ export function AIAssistant() {
       content: trimmed,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const assistantId = `ai-${Date.now()}`;
+    const assistantPlaceholder: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+    };
+
+    // Update both state and ref immediately
+    const newMessages = [...messagesRef.current, userMessage, assistantPlaceholder];
+    setMessages(newMessages);
+    messagesRef.current = newMessages;
     setInput('');
     setIsLoading(true);
     setShowQuickActions(false);
 
-    // Create assistant placeholder
-    const assistantId = `ai-${Date.now()}`;
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantId, role: 'assistant', content: '' },
-    ]);
-
     try {
-      const history = [...messages, userMessage]
-        .slice(-11)
+      // Build history from ref (always up-to-date, excludes the empty placeholder)
+      const historyForAPI = messagesRef.current
+        .filter((m) => m.content.length > 0) // Exclude empty placeholder
+        .slice(-10) // Last 10 messages with content
         .map((m) => ({ role: m.role, content: m.content }));
 
       abortControllerRef.current = new AbortController();
@@ -149,8 +160,7 @@ export function AIAssistant() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: trimmed,
-          history: history.slice(0, -1), // Exclude current from history (API adds it)
-          stream: true,
+          history: historyForAPI,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -159,81 +169,50 @@ export function AIAssistant() {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      const contentType = res.headers.get('content-type');
+      const data = await res.json();
 
-      if (contentType?.includes('text/event-stream')) {
-        // Streaming mode — read SSE
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = '';
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.content) {
-                    fullContent += parsed.content;
-                    setMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === assistantId
-                          ? { ...m, content: fullContent }
-                          : m
-                      )
-                    );
-                  }
-                } catch {
-                  // Skip malformed SSE data
-                }
-              }
-            }
-          }
-        }
+      if (data.reply) {
+        // Update the placeholder with the real response
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, content: data.reply }
+              : m
+          )
+        );
+        // Keep ref in sync
+        messagesRef.current = messagesRef.current.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: data.reply }
+            : m
+        );
       } else {
-        // Non-streaming JSON fallback
-        const data = await res.json();
-        if (data.reply) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: data.reply }
-                : m
-            )
-          );
-        } else {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: "Sorry, I couldn't process that. Please try again." }
-                : m
-            )
-          );
-        }
+        const errorContent = "Sorry, I couldn't process that. Please try again.";
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: errorContent } : m
+          )
+        );
+        messagesRef.current = messagesRef.current.map((m) =>
+          m.id === assistantId ? { ...m, content: errorContent } : m
+        );
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
+      const errorContent = 'Network error. Please check your connection and try again.';
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, content: 'Network error. Please check your connection and try again.' }
-            : m
+          m.id === assistantId ? { ...m, content: errorContent } : m
         )
+      );
+      messagesRef.current = messagesRef.current.map((m) =>
+        m.id === assistantId ? { ...m, content: errorContent } : m
       );
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [input, isLoading, messages]);
+  }, [input, isLoading]); // NOTE: messages NOT in deps — we use messagesRef instead
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -247,13 +226,15 @@ export function AIAssistant() {
 
   // ── Clear chat ──
   const handleClearChat = useCallback(() => {
-    setMessages([
+    const freshMessages: ChatMessage[] = [
       {
-        id: 'welcome',
+        id: `welcome-${Date.now()}`,
         role: 'assistant',
-        content: "Assalamu Alaikum! How can I help you today? Feel free to ask about our books, products, or any Islamic knowledge.",
+        content: 'Assalamu Alaikum! How can I help you today? Feel free to ask about our books, products, or any Islamic knowledge.',
       },
-    ]);
+    ];
+    setMessages(freshMessages);
+    messagesRef.current = freshMessages;
     setShowQuickActions(true);
   }, []);
 
@@ -271,15 +252,7 @@ export function AIAssistant() {
     <>
       {/* ═══ Floating Open Button ═══ */}
       {!isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 20,
-            zIndex: 99999,
-          }}
-        >
-          {/* Pulse animation ring */}
+        <div style={{ position: 'fixed', bottom: 24, right: 20, zIndex: 99999 }}>
           <div
             style={{
               position: 'absolute',
@@ -309,7 +282,6 @@ export function AIAssistant() {
             }}
           >
             <SalameeIcon size={28} />
-            {/* Online indicator dot */}
             <div
               style={{
                 position: 'absolute',
@@ -324,7 +296,6 @@ export function AIAssistant() {
             />
           </button>
 
-          {/* Tooltip label */}
           <div
             style={{
               position: 'absolute',
@@ -375,7 +346,6 @@ export function AIAssistant() {
             }}
           />
 
-          {/* Responsive panel styles */}
           <style>{`
             @media (min-width: 640px) {
               #bf-assistant-panel {
@@ -449,7 +419,6 @@ export function AIAssistant() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Avatar */}
                 <div
                   style={{
                     width: 40,
@@ -488,9 +457,7 @@ export function AIAssistant() {
                 </div>
               </div>
 
-              {/* Header actions */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Clear chat (desktop) */}
                 <button
                   onClick={handleClearChat}
                   aria-label="Clear chat"
@@ -510,7 +477,6 @@ export function AIAssistant() {
                   <Trash2 style={{ width: 14, height: 14 }} />
                 </button>
 
-                {/* Expand/Minimize (desktop) */}
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
                   aria-label={isExpanded ? 'Minimize' : 'Expand'}
@@ -534,7 +500,6 @@ export function AIAssistant() {
                   )}
                 </button>
 
-                {/* Close button */}
                 <button
                   onClick={() => setIsOpen(false)}
                   aria-label="Close chat"
@@ -597,7 +562,7 @@ export function AIAssistant() {
                   <div
                     style={{
                       maxWidth: msg.role === 'user' ? '80%' : '85%',
-                      borderRadius: msg.role === 'user' ? 18 : 18,
+                      borderRadius: 18,
                       padding: msg.role === 'user' ? '10px 16px' : '11px 15px',
                       fontSize: 13.5,
                       lineHeight: 1.65,
@@ -624,8 +589,8 @@ export function AIAssistant() {
                 </div>
               ))}
 
-              {/* Streaming typing indicator */}
-              {isLoading && messages[messages.length - 1]?.content === '' && (
+              {/* Typing indicator */}
+              {isLoading && (
                 <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                   <div
                     style={{
@@ -731,7 +696,6 @@ export function AIAssistant() {
                   borderRadius: 24,
                   padding: '4px 4px 4px 18px',
                   border: '1px solid rgba(29,51,59,0.06)',
-                  transition: 'border-color 0.2s ease',
                 }}
               >
                 <input
