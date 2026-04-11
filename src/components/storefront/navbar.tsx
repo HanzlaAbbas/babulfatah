@@ -160,11 +160,11 @@ export function Navbar() {
                 <SheetHeader className="px-5 pt-6 pb-4 border-b border-border/50">
                   <SheetTitle className="flex items-center gap-3">
                     <Image
-                      src="/logo.svg"
+                      src="/logo.png"
                       alt="Bab-ul-Fatah"
-                      width={32}
-                      height={32}
-                      className="h-8 w-auto rounded"
+                      width={40}
+                      height={40}
+                      className="h-8 w-auto rounded object-contain"
                     />
                     <div>
                       <span className="text-base font-bold text-brand tracking-tight block leading-tight">
@@ -225,24 +225,24 @@ export function Navbar() {
             className="shrink-0 hidden lg:block"
           >
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="Bab-ul-Fatah"
-              width={36}
-              height={36}
+              width={44}
+              height={44}
               priority
-              className="h-9 w-auto rounded"
+              className="h-10 w-auto rounded object-contain"
             />
           </Link>
 
           {/* Mobile center logo */}
           <Link href="/" className="shrink-0 lg:hidden absolute left-1/2 -translate-x-1/2">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="Bab-ul-Fatah"
-              width={32}
-              height={32}
+              width={36}
+              height={36}
               priority
-              className="h-8 w-auto rounded"
+              className="h-8 w-auto rounded object-contain"
             />
           </Link>
 

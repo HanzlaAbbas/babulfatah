@@ -159,20 +159,22 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 lg:gap-8">
           {/* ── Column 1: Brand ── */}
           <div className="pb-6 lg:pb-0 lg:col-span-2">
-            <div className="mb-4">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/logo.png"
-                  alt="Bab-ul-Fatah"
-                  width={36}
-                  height={36}
-                  className="h-9 w-auto rounded"
-                />
-                <h3 className="text-xl font-bold text-white inline-block">
+            <div className="mb-4 flex items-center gap-3">
+              <Image
+                src="/logo.png"
+                alt="Bab-ul-Fatah"
+                width={48}
+                height={48}
+                className="h-10 w-auto rounded object-contain"
+              />
+              <div>
+                <h3 className="text-xl font-bold text-white leading-tight">
                   Bab-ul-Fatah
                 </h3>
+                <p className="text-[11px] text-white/50 leading-tight">
+                  Islamic Bookstore
+                </p>
               </div>
-              <div className="h-0.5 w-12 bg-golden mt-2 rounded-full" />
             </div>
 
             <p className="text-white text-sm leading-relaxed mb-5 max-w-xs opacity-90">
