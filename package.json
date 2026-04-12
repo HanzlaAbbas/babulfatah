@@ -18,6 +18,8 @@
     "seed": "npx ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.62",
+    "@ai-sdk/groq": "^3.0.35",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -54,6 +56,7 @@
     "@reactuses/core": "^6.0.5",
     "@tanstack/react-query": "^5.82.0",
     "@tanstack/react-table": "^8.21.3",
+    "ai": "^6.0.158",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
