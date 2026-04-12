@@ -12,12 +12,13 @@ interface CheckoutBody {
   city: string;
   address: string;
   items: CheckoutItem[];
+  couponCode?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CheckoutBody = await request.json();
-    const { fullName, phone, city, address, items } = body;
+    const { fullName, phone, city, address, items, couponCode } = body;
 
     // ── Validate required fields ───────────────────────────────
     if (
@@ -37,6 +38,33 @@ export async function POST(request: NextRequest) {
         { error: 'Your cart is empty' },
         { status: 400 }
       );
+    }
+
+    // ── Validate & apply coupon if provided ────────────────────
+    let couponDiscount = 0;
+    let validatedCoupon = null;
+
+    if (couponCode?.trim()) {
+      const normalizedCode = couponCode.trim().toUpperCase();
+      validatedCoupon = await db.coupon.findUnique({
+        where: { code: normalizedCode },
+      });
+
+      if (!validatedCoupon) {
+        return NextResponse.json(
+          { error: 'Invalid coupon code', field: 'couponCode' },
+          { status: 400 }
+        );
+      }
+
+      if (validatedCoupon.used) {
+        return NextResponse.json(
+          { error: 'This coupon has already been used', field: 'couponCode' },
+          { status: 400 }
+        );
+      }
+
+      couponDiscount = validatedCoupon.value; // e.g. 10 for 10%
     }
 
     // ── Resolve products from database ─────────────────────────
@@ -91,13 +119,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Transaction: Create order + deduct stock ───────────────
+    // Apply coupon discount
+    let discountAmount = 0;
+    if (couponDiscount > 0) {
+      discountAmount = Math.round((totalAmount * couponDiscount) / 100 * 100) / 100;
+    }
+    const finalTotal = Math.max(0, Math.round((totalAmount - discountAmount) * 100) / 100);
+
+    // ── Transaction: Create order + deduct stock + mark coupon used ──
     const order = await db.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           customerName: fullName.trim(),
           status: 'PENDING',
-          totalAmount,
+          totalAmount: finalTotal,
           shippingCity: city.trim(),
           shippingAddress: address.trim(),
           contactPhone: phone.trim(),
@@ -119,6 +154,17 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Mark coupon as used
+      if (validatedCoupon && couponDiscount > 0) {
+        await tx.coupon.update({
+          where: { code: validatedCoupon.code },
+          data: {
+            used: true,
+            usedAt: new Date(),
+          },
+        });
+      }
+
       return newOrder;
     });
 
@@ -126,6 +172,8 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId: order.id,
       totalAmount: order.totalAmount,
+      discountApplied: discountAmount > 0,
+      discountAmount,
       message: 'Order placed successfully',
     });
   } catch (error) {
