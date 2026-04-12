@@ -106,6 +106,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
 // ─── Chat Widget ──────────────────────────────────────────────────────────────
 export function AIAssistant() {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -225,8 +226,14 @@ export function AIAssistant() {
     [input, isLoading, handleSend]
   );
 
+  // Only render on client (document.body doesn't exist during SSR/prerender)
+  useEffect(() => { setMounted(true); }, []);
+
   // Quick actions visible only before first user message
   const showQuickActions = messages.filter((m) => m.role === 'user').length === 0;
+
+  // Server-side: return null (portal target doesn't exist yet)
+  if (!mounted) return null;
 
   return createPortal(
     <>
