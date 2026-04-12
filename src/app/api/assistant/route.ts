@@ -1,12 +1,12 @@
 import { google } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Bab-ul-Fatah AI Assistant — REAL Open Source LLM Powered
+// Bab-ul-Fatah AI Assistant — REAL Open Source LLM Powered (v5)
 // ─────────────────────────────────────────────────────────────────────────────────
 // Dual-provider architecture:
-//   PRIMARY:   Groq → Llama 3.3 70B (open source, 500 tok/sec, FREE)
+//   PRIMARY:   Groq → Llama 3.3 70B (open source, insanely fast, FREE)
 //   FALLBACK:  Google → Gemini 2.0 Flash (GPT-4o class, FREE)
 //   OFFLINE:   Smart topic-based responses (no API key needed)
 //
@@ -15,8 +15,10 @@ import { streamText } from 'ai';
 //   - Open source models (Meta Llama 3.3 70B) — fully customizable
 //   - Dual provider = 99.9% uptime (Groq fails → Gemini takes over)
 //   - Deep domain knowledge (Islamic books/products expert)
-//   - Real streaming (token by token, feels like typing)
 //   - Multi-turn memory (remembers full conversation)
+//
+// CLIENT: Uses plain fetch (no ai/react or @ai-sdk/react needed)
+//   Returns JSON: { content: "response text", provider: "groq"|"gemini"|"fallback" }
 //
 // SETUP (one free key needed — takes 60 seconds):
 //   Option A (RECOMMENDED): Groq — https://console.groq.com/keys
@@ -112,21 +114,20 @@ const SYSTEM_PROMPT = `You are the AI Assistant for Bab-ul-Fatah (babulfatah.com
 - Returns: Contact within 7 days for damaged/wrong items
 - Gift Wrapping: Available on request
 
-## Response Quality Standards (CRITICAL — THIS IS WHAT MAKES US BETTER THAN INKEEP)
-
-1. SPECIFICITY: Never give generic answers. If someone asks about Quran, ask what TYPE (translation, tajweed, hafzi, tafseer?) and recommend specific titles.
-2. CONTEXT: Read the full conversation. Reference what was discussed before. Build on previous answers.
-3. RECOMMENDATIONS: Always suggest 2-3 specific products when relevant. Mention format (hardcover, paperback), language, and why it's good.
-4. PERSONALIZATION: If they mention being a beginner, recommend entry-level. If advanced, suggest scholarly works. If buying for kids, suggest age-appropriate.
-5. PROACTIVE HELP: Anticipate follow-up needs. If they ask about a Quran translation, mention we also have Tajweed versions.
-6. ISLAMIC ETIQUETTE: Include relevant Quran verses, hadith references, or Islamic wisdom when appropriate.
-7. CONCISE + DEEP: Keep answers focused (3-5 paragraphs max) but information-dense. Use bullet points for lists.
+## Response Quality Standards (CRITICAL)
+1. SPECIFICITY: Never give generic answers. If someone asks about Quran, ask what TYPE and recommend specific titles.
+2. CONTEXT: Read the full conversation. Reference what was discussed before.
+3. RECOMMENDATIONS: Always suggest 2-3 specific products when relevant.
+4. PERSONALIZATION: If beginner, recommend entry-level. If advanced, suggest scholarly works.
+5. PROACTIVE HELP: Anticipate follow-up needs.
+6. ISLAMIC ETIQUETTE: Include relevant Quran verses, hadith references when appropriate.
+7. CONCISE + DEEP: Keep answers focused (3-5 paragraphs max) but information-dense.
 
 ## Formatting Rules
 - Use **bold** for book titles and key terms
 - Use bullet points (- ) for lists of items
 - Use numbered lists for steps or rankings
-- Mention prices only as "affordable" or "premium" (never exact prices — they change)
+- Mention prices only as "affordable" or "premium" (never exact prices)
 - Always include a call-to-action: browse category, visit website, WhatsApp for complex queries
 
 ## NEVER DO
@@ -174,56 +175,48 @@ function getSmartFallback(msg: string): string {
   return FALLBACKS.default;
 }
 
-// ── POST: Stream chat via Vercel AI SDK (Dual Provider) ──────────────────────
+// ── POST: Chat via plain JSON (no data stream protocol) ──────────────────────
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const hasGroqKey = !!process.env.GROQ_API_KEY;
   const hasGeminiKey = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-  // ── Strategy: Try Groq first, fall back to Gemini, then offline fallback ──
-
-  // STRATEGY 1: Groq (Open Source Llama 3.3 70B) — PRIMARY
+  // ── STRATEGY 1: Groq (Open Source Llama 3.3 70B) — PRIMARY ──
   if (hasGroqKey) {
     try {
-      const result = streamText({
+      const { text } = await generateText({
         model: groq('llama-3.3-70b-versatile'),
         system: SYSTEM_PROMPT,
         messages,
         maxTokens: 800,
         temperature: 0.75,
       });
-      return result.toDataStreamResponse();
+      return Response.json({ content: text, provider: 'groq' });
     } catch (groqError) {
       console.error('[AI] Groq failed, trying Gemini fallback:', groqError);
-      // Fall through to Gemini
     }
   }
 
-  // STRATEGY 2: Google Gemini 2.0 Flash — FALLBACK
+  // ── STRATEGY 2: Google Gemini 2.0 Flash — FALLBACK ──
   if (hasGeminiKey) {
     try {
-      const result = streamText({
+      const { text } = await generateText({
         model: google('gemini-2.0-flash'),
         system: SYSTEM_PROMPT,
         messages,
         maxTokens: 800,
         temperature: 0.7,
       });
-      return result.toDataStreamResponse();
+      return Response.json({ content: text, provider: 'gemini' });
     } catch (geminiError) {
       console.error('[AI] Gemini also failed:', geminiError);
-      // Fall through to offline
     }
   }
 
-  // STRATEGY 3: Smart Offline Fallback — NO API KEY CONFIGURED
+  // ── STRATEGY 3: Smart Offline Fallback — NO API KEY CONFIGURED ──
   console.warn('[AI] No API key configured. Using offline fallback. Add GROQ_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY to Vercel env.');
   const lastUserMsg = messages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
   const fallbackReply = getSmartFallback(lastUserMsg);
-
-  // Return as Vercel AI SDK compatible stream (so useChat still works)
-  return new Response(fallbackReply, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-  });
+  return Response.json({ content: fallbackReply, provider: 'fallback' });
 }

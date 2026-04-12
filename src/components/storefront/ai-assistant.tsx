@@ -1,31 +1,30 @@
 'use client';
 
-import { useChat } from 'ai/react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Minimize2, Maximize2, Trash2, Sparkles, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Bab-ul-Fatah AI Assistant — Powered by Real Open Source LLM
+// Bab-ul-Fatah AI Assistant — Powered by Real Open Source LLM (v5)
 // ─────────────────────────────────────────────────────────────────────────────────
-// Uses the Vercel AI SDK `useChat` hook which handles:
-// - Real streaming responses (token by token from Llama 3.3 70B / Gemini)
-// - Multi-turn conversation memory (automatic)
-// - Loading states, error handling, message state
-//
-// BACKEND: Dual-provider AI route
-//   PRIMARY:   Groq → Llama 3.3 70B (open source, insanely fast)
-//   FALLBACK:  Google → Gemini 2.0 Flash
-//   OFFLINE:   Smart topic-based responses
+// ZERO client-side AI SDK dependencies — pure React + fetch
+// Backend: Dual-provider AI (Groq Llama 3.3 70B / Gemini 2.0 Flash)
+// Returns plain JSON: { content, provider }
 //
 // SETUP: Add your FREE API key to Vercel:
 //   GROQ_API_KEY = https://console.groq.com/keys (recommended)
 //   GOOGLE_GENERATIVE_AI_API_KEY = https://aistudio.google.com/apikey (alternate)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Quick Actions ────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
 
+// ─── Quick Actions ────────────────────────────────────────────────────────────
 const QUICK_ACTIONS = [
   { label: 'Quran Collection', icon: '📖', query: 'Tell me about your Quran collection — translations, tajweed, and hafzi copies' },
   { label: 'Hadith Books', icon: '📜', query: 'What hadith books do you carry? I want authentic collections' },
@@ -36,15 +35,12 @@ const QUICK_ACTIONS = [
 ];
 
 // ─── Enhanced Markdown Renderer ──────────────────────────────────────────────
-// Supports: **bold**, *italic*, - bullets, numbered lists, newlines
-
 function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
   let keyIdx = 0;
 
   const renderInline = (line: string, key: string) => {
-    // Split by bold (**...**) and italic (*...*) patterns
     const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -69,13 +65,11 @@ function renderMarkdown(text: string): React.ReactNode[] {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Skip empty lines (add spacing)
     if (!trimmed) {
       elements.push(<div key={`sp-${keyIdx++}`} style={{ height: 8 }} />);
       continue;
     }
 
-    // Bullet points (- item or * item)
     if (trimmed.match(/^[-*]\s+/)) {
       const content = trimmed.replace(/^[-*]\s+/, '');
       elements.push(
@@ -87,7 +81,6 @@ function renderMarkdown(text: string): React.ReactNode[] {
       continue;
     }
 
-    // Numbered lists (1. item)
     if (trimmed.match(/^\d+\.\s+/)) {
       const match = trimmed.match(/^(\d+)\.\s+(.*)/);
       if (match) {
@@ -101,7 +94,6 @@ function renderMarkdown(text: string): React.ReactNode[] {
       }
     }
 
-    // Regular paragraph
     elements.push(
       <div key={`p-${keyIdx++}`} style={{ lineHeight: 1.65 }}>
         {renderInline(trimmed, `p-${keyIdx}`)}
@@ -113,40 +105,23 @@ function renderMarkdown(text: string): React.ReactNode[] {
 }
 
 // ─── Chat Widget ──────────────────────────────────────────────────────────────
-
 export function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'welcome',
+      role: 'assistant',
+      content:
+        "Assalamu Alaikum! Welcome to Bab-ul-Fatah — Pakistan's premier online Islamic bookstore. I'm your AI assistant and I can help you find the perfect Islamic books and products.\n\nI know our entire collection of 1,200+ books including Quran, Hadith, Tafseer, Seerah, Fiqh, Children's books, and Islamic products.\n\nJust ask me anything or tap a quick action below to get started!",
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // VERCEL AI SDK — useChat hook
-  // Handles: streaming, conversation memory, loading, errors, everything
-  // ═══════════════════════════════════════════════════════════════════════════
-  const {
-    messages,
-    input,
-    setInput,
-    handleSubmit,
-    isLoading,
-    error,
-    setMessages,
-  } = useChat({
-    api: '/api/assistant',
-    id: 'babulfatah-assistant',
-    initialMessages: [
-      {
-        id: 'welcome',
-        role: 'assistant',
-        content:
-          "Assalamu Alaikum! Welcome to Bab-ul-Fatah — Pakistan's premier online Islamic bookstore. I'm your AI assistant and I can help you find the perfect Islamic books and products.\n\nI know our entire collection of 1,200+ books including Quran, Hadith, Tafseer, Seerah, Fiqh, Children's books, and Islamic products.\n\nJust ask me anything or tap a quick action below to get started!",
-      },
-    ],
-  });
-
-  // Quick actions visible only before first user message
-  const showQuickActions = messages.filter((m) => m.role === 'user').length === 0;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -160,16 +135,57 @@ export function AIAssistant() {
     }
   }, [isOpen]);
 
+  // ── Send message handler (plain fetch, no AI SDK) ──
+  const handleSend = useCallback(async (messageText: string) => {
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: messageText.trim(),
+    };
+
+    // Optimistic: add user message immediately
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Call our AI backend (plain JSON, no streaming protocol)
+      const res = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Add AI response
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        content: data.content || 'Sorry, I could not generate a response. Please try again.',
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (err) {
+      console.error('[AI Chat] Error:', err);
+      setError('Something went wrong. Please try again or WhatsApp us at +92 326 5903300.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [messages]);
+
   // Quick action handler
   const handleQuickAction = useCallback(
     (query: string) => {
-      setInput(query);
-      setTimeout(() => {
-        const form = document.querySelector('#bf-chat-form') as HTMLFormElement;
-        if (form) form.requestSubmit();
-      }, 50);
+      handleSend(query);
     },
-    [setInput]
+    [handleSend]
   );
 
   // Clear chat
@@ -182,19 +198,35 @@ export function AIAssistant() {
           'Assalamu Alaikum! How can I help you today? Ask me about our books, products, shipping, or any Islamic knowledge.',
       },
     ]);
-  }, [setMessages]);
+    setError(null);
+  }, []);
 
-  // Form key handler
+  // Form submit handler
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (input.trim() && !isLoading) {
+        handleSend(input);
+      }
+    },
+    [input, isLoading, handleSend]
+  );
+
+  // Key handler
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const form = document.querySelector('#bf-chat-form') as HTMLFormElement;
-        if (form && input.trim()) form.requestSubmit();
+        if (input.trim() && !isLoading) {
+          handleSend(input);
+        }
       }
     },
-    [input]
+    [input, isLoading, handleSend]
   );
+
+  // Quick actions visible only before first user message
+  const showQuickActions = messages.filter((m) => m.role === 'user').length === 0;
 
   return createPortal(
     <>
@@ -510,9 +542,7 @@ export function AIAssistant() {
                     <p style={{ fontSize: 13, fontWeight: 600, color: '#991B1B', margin: '0 0 4px 0' }}>
                       Something went wrong
                     </p>
-                    <p style={{ fontSize: 12, color: '#B91C1C', margin: 0 }}>
-                      Please try again. If this persists, WhatsApp us at +92 326 5903300.
-                    </p>
+                    <p style={{ fontSize: 12, color: '#B91C1C', margin: 0 }}>{error}</p>
                   </div>
                 </div>
               )}
@@ -610,7 +640,7 @@ export function AIAssistant() {
                 background: '#FFFFFF',
               }}
             >
-              <form id="bf-chat-form" onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit}>
                 <div
                   style={{
                     display: 'flex',
@@ -625,7 +655,6 @@ export function AIAssistant() {
                   <input
                     ref={inputRef}
                     type="text"
-                    name="message"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
