@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   Menu,
   ShoppingCart,
   ChevronRight,
-  ChevronDown,
   BookOpen,
   User,
   Search,
@@ -38,25 +37,31 @@ interface CategoryNode {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-/** Max top-level categories to show as pills before "More ▾" on desktop */
-const MAX_VISIBLE_CATEGORIES = 7;
+/** Hardcoded navbar category pills — curated list */
+const NAV_PILLS = [
+  { label: 'All Books', href: '/shop', highlight: false },
+  { label: 'Goodword', href: '/shop?category=goodword-books', highlight: true, icon: 'star' as const },
+  { label: 'IIPH', href: '/shop?category=iiph', highlight: true, icon: 'book' as const },
+  { label: 'Women', href: '/shop?category=women', highlight: false },
+  { label: 'Tafseer', href: '/shop?category=tafseer', highlight: false },
+  { label: 'Hadith', href: '/shop?category=hadith', highlight: false },
+  { label: 'Biography', href: '/shop?category=biography', highlight: false },
+  { label: 'KIDS', href: '/shop?category=children', highlight: false },
+];
 
 // ─── Navbar Component ─────────────────────────────────────────────────────────
 // Premium "Scholar's Library" navbar with:
 //   - Glass-effect sticky header with scroll shadow
 //   - Desktop: Logo (left) + Search (center) + Cart+User (right)
-//   - Horizontal category pill nav with "More ▾" mega-menu
+//   - Hardcoded horizontal category pill nav (no dynamic fetch)
 //   - Mobile: Hamburger (left) + Logo (center) + Cart (right)
-//   - Mobile sheet: accordion categories + static quick links
+//   - Mobile sheet: accordion categories (from API) + static quick links
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreMenuRef = useRef<HTMLDivElement>(null);
-  const moreTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalItems = useCart((s) => s.totalItems);
   const cartIsOpen = useCart((s) => s.isOpen);
@@ -73,7 +78,7 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ── Fetch category tree on mount ──
+  // ── Fetch category tree for mobile sheet accordion only ──
   useEffect(() => {
     let cancelled = false;
 
@@ -94,40 +99,12 @@ export function Navbar() {
     return () => { cancelled = true; };
   }, []);
 
-  // ── "More" dropdown hover handlers ──
-  const handleMoreEnter = useCallback(() => {
-    if (moreTimeoutRef.current) clearTimeout(moreTimeoutRef.current);
-    setMoreOpen(true);
-  }, []);
-
-  const handleMoreLeave = useCallback(() => {
-    moreTimeoutRef.current = setTimeout(() => setMoreOpen(false), 200);
-  }, []);
-
-  // ── Dismiss "More" on click outside ──
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        moreMenuRef.current &&
-        !moreMenuRef.current.contains(e.target as Node)
-      ) {
-        setMoreOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // ── Derived: visible vs overflow categories ──
-  const visibleCategories = categoryTree.slice(0, MAX_VISIBLE_CATEGORIES);
-  const overflowCategories = categoryTree.slice(MAX_VISIBLE_CATEGORIES);
-
   // ── Static quick links (mobile sheet) ──
   const quickLinks = [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'All Books' },
-    { href: '/shop?category=goodword-books', label: '⭐ Goodword Books' },
-    { href: '/shop?category=iiph', label: '📚 IIPH Books' },
+    { href: '/shop?category=goodword-books', label: 'Goodword Books' },
+    { href: '/shop?category=iiph', label: 'IIPH Books' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
   ];
@@ -303,7 +280,7 @@ export function Navbar() {
               size="icon"
               className="h-9 w-9 text-muted-foreground"
               onClick={() => {
-                // Open mobile search by dispatching ⌘K-like event logic
+                // Open mobile search by dispatching Ctrl+K event
                 const event = new KeyboardEvent('keydown', {
                   key: 'k',
                   metaKey: false,
@@ -334,178 +311,49 @@ export function Navbar() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════
-            CATEGORY NAV — Horizontal pill bar
+            CATEGORY NAV — Hardcoded horizontal pill bar
             ══════════════════════════════════════════════════════════════════════ */}
-        {categoryTree.length > 0 && (
-          <div className="border-t border-border/30 bg-white">
-            <div className="container mx-auto px-4 md:px-6">
-              {/* ── Desktop: pills + More dropdown ── */}
-              <div className="hidden lg:flex items-center h-10 gap-1">
-                {/* "All Books" pill */}
+        <div className="border-t border-border/30 bg-white">
+          <div className="container mx-auto px-4 md:px-6">
+            {/* ── Desktop: static pills ── */}
+            <div className="hidden lg:flex items-center h-10 gap-1">
+              {NAV_PILLS.map((pill) => (
                 <Link
-                  href="/shop"
-                  className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-brand bg-brand/5 hover:bg-brand/10 transition-colors whitespace-nowrap"
+                  key={pill.label}
+                  href={pill.href}
+                  className={
+                    pill.highlight
+                      ? 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5'
+                      : 'px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted-foreground hover:text-brand hover:bg-muted/70 transition-colors whitespace-nowrap'
+                  }
                 >
-                  All Books
+                  {pill.icon === 'star' && <Star className="h-3 w-3" />}
+                  {pill.icon === 'book' && <BookOpen className="h-3 w-3" />}
+                  {pill.label}
                 </Link>
+              ))}
+            </div>
 
-                {/* Goodword Books — highlighted publisher pill */}
+            {/* ── Mobile: horizontal scrollable pills ── */}
+            <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4">
+              {NAV_PILLS.map((pill) => (
                 <Link
-                  href="/shop?category=goodword-books"
-                  className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
+                  key={pill.label}
+                  href={pill.href}
+                  className={
+                    pill.highlight
+                      ? 'px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1'
+                      : 'px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-brand hover:bg-muted/70 transition-colors whitespace-nowrap shrink-0'
+                  }
                 >
-                  <Star className="h-3 w-3" />
-                  Goodword
+                  {pill.icon === 'star' && <Star className="h-2.5 w-2.5" />}
+                  {pill.icon === 'book' && <BookOpen className="h-2.5 w-2.5" />}
+                  {pill.label}
                 </Link>
-
-                {/* IIPH Books — highlighted publisher pill */}
-                <Link
-                  href="/shop?category=iiph"
-                  className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap flex items-center gap-1.5"
-                >
-                  <BookOpen className="h-3 w-3" />
-                  IIPH
-                </Link>
-
-                {/* Visible category pills */}
-                {visibleCategories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/shop?category=${cat.slug}`}
-                    className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted-foreground hover:text-brand hover:bg-muted/70 transition-colors whitespace-nowrap"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-
-                {/* "More ▾" dropdown */}
-                {overflowCategories.length > 0 && (
-                  <div
-                    ref={moreMenuRef}
-                    className="relative"
-                    onMouseEnter={handleMoreEnter}
-                    onMouseLeave={handleMoreLeave}
-                  >
-                    <button
-                      className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted-foreground hover:text-brand hover:bg-muted/70 transition-colors whitespace-nowrap"
-                      onClick={() => setMoreOpen((prev) => !prev)}
-                    >
-                      More
-                      <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                          moreOpen ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-
-                    {/* ── Dropdown Panel ── */}
-                    {moreOpen && (
-                      <div
-                        className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-border/60 rounded-xl shadow-elevated overflow-hidden z-50 animate-in fade-in-0 slide-in-from-top-1 duration-150"
-                        onMouseEnter={handleMoreEnter}
-                        onMouseLeave={handleMoreLeave}
-                      >
-                        {/* Golden accent line */}
-                        <div className="h-0.5 bg-gradient-to-r from-golden via-golden-light to-golden" />
-
-                        <div className="py-2 max-h-80 overflow-y-auto scrollbar-thin">
-                          {overflowCategories.map((cat) => (
-                            <div key={cat.id}>
-                              <Link
-                                href={`/shop?category=${cat.slug}`}
-                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 hover:text-brand transition-colors"
-                                onClick={() => setMoreOpen(false)}
-                              >
-                                <span className="w-1 h-1 rounded-full bg-golden/60 shrink-0" />
-                                {cat.name}
-                                {cat.children && cat.children.length > 0 && (
-                                  <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground/40" />
-                                )}
-                              </Link>
-
-                              {/* Sub-categories inline */}
-                              {cat.children && cat.children.length > 0 && (
-                                <div className="ml-5 border-l border-border/40 pl-3 pb-1">
-                                  {cat.children.slice(0, 5).map((sub) => (
-                                    <Link
-                                      key={sub.id}
-                                      href={`/shop?category=${sub.slug}`}
-                                      className="flex items-center gap-2 py-1.5 pr-4 text-[13px] text-muted-foreground hover:text-brand transition-colors"
-                                      onClick={() => setMoreOpen(false)}
-                                    >
-                                      <span className="w-0.5 h-0.5 rounded-full bg-golden/40 shrink-0" />
-                                      {sub.name}
-                                    </Link>
-                                  ))}
-                                  {cat.children.length > 5 && (
-                                    <Link
-                                      href={`/shop?category=${cat.slug}`}
-                                      className="flex items-center gap-1.5 py-1.5 pr-4 text-[13px] text-golden-dark hover:text-golden font-medium transition-colors"
-                                      onClick={() => setMoreOpen(false)}
-                                    >
-                                      View all {cat.children.length} subcategories →
-                                    </Link>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {/* Footer: All categories link */}
-                          <div className="border-t border-border/40 mt-2 pt-2">
-                            <Link
-                              href="/shop"
-                              className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium text-golden-dark hover:text-golden hover:bg-golden/5 transition-colors"
-                              onClick={() => setMoreOpen(false)}
-                            >
-                              <BookOpen className="h-4 w-4" />
-                              Browse All Categories
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Mobile: horizontal scrollable pills ── */}
-              <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4">
-                <Link
-                  href="/shop"
-                  className="px-3 py-1.5 rounded-full text-xs font-medium text-brand bg-brand/5 hover:bg-brand/10 transition-colors whitespace-nowrap shrink-0"
-                >
-                  All Books
-                </Link>
-                {/* Goodword Books — highlighted publisher pill (mobile) */}
-                <Link
-                  href="/shop?category=goodword-books"
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
-                >
-                  <Star className="h-2.5 w-2.5" />
-                  Goodword
-                </Link>
-                {/* IIPH Books — highlighted publisher pill (mobile) */}
-                <Link
-                  href="/shop?category=iiph"
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold text-golden-foreground bg-golden hover:bg-golden-light transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
-                >
-                  <BookOpen className="h-2.5 w-2.5" />
-                  IIPH
-                </Link>
-                {categoryTree.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/shop?category=${cat.slug}`}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-brand hover:bg-muted/70 transition-colors whitespace-nowrap shrink-0"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
-        )}
+        </div>
       </header>
 
       {/* ── Cart Sheet ── */}

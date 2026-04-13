@@ -121,7 +121,6 @@ function HeroProgress({ currentIndex }: { currentIndex: number }) {
   const color = accentColors[currentAccent].primary;
 
   useEffect(() => {
-    setProgress(0);
     const startTime = Date.now();
     const duration = 6000;
     let rafId: number;
@@ -506,7 +505,7 @@ export function HeroSlider() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) {
-      diff > 0 ? goNext() : goPrev();
+      if (diff > 0) { goNext(); } else { goPrev(); }
     }
   };
 
@@ -561,7 +560,7 @@ export function HeroSlider() {
       <IslamicOverlay accent={currentSlide.accent} />
 
       {/* ── Slide Content ── */}
-      <div className="relative z-20 min-h-[420px] sm:min-h-[520px] md:min-h-[680px] lg:min-h-[88vh]">
+      <div className="relative z-20 min-h-[420px] sm:min-h-[520px] md:min-h-[680px] lg:min-h-[88vh] pb-20 sm:pb-24 md:pb-28">
         {slides.map((slide) => (
           <SlideContent
             key={slide.id}
@@ -572,17 +571,17 @@ export function HeroSlider() {
         ))}
       </div>
 
-      {/* ── Navigation Arrows ── */}
+      {/* ── Navigation Arrows — positioned above timeline ── */}
       <button
         onClick={goPrev}
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute left-3 sm:left-6 top-[45%] -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
       </button>
       <button
         onClick={goNext}
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute right-3 sm:right-6 top-[45%] -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Next slide"
       >
         <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
