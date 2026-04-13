@@ -10,26 +10,31 @@ import { MobileStickyBar } from '@/components/storefront/mobile-sticky-bar';
 const HOMEPAGE_CATEGORIES = [
   {
     name: 'Children',
+    slug: 'children',
     title: "Children's Islamic Library",
     subtitle: 'Goodword & IIPH — Fun and educational Islamic books for kids',
   },
   {
     name: 'Quran',
+    slug: 'quran',
     title: 'Quran Collection',
     subtitle: 'Translations, Tafseer, and Tajweed guides',
   },
   {
-    name: 'Prophets Seerah',
+    name: "Prophet's Seerah",
+    slug: 'prophets-seerah',
     title: "Prophet's Biography",
     subtitle: 'Seerah books from authentic sources',
   },
   {
     name: 'Hadith',
+    slug: 'hadith',
     title: 'Hadith Collections',
     subtitle: 'Sahih Bukhari, Muslim, Tirmidhi and more',
   },
   {
     name: 'Fiqh',
+    slug: 'fiqh',
     title: 'Islamic Jurisprudence',
     subtitle: 'Hanafi, Shafi, Maliki & Hanbali schools of thought',
   },
@@ -41,12 +46,18 @@ export default async function HomePage() {
   // ── Parallel data fetching for all 5 categories + total count ──
 
   const categoryDataPromises = HOMEPAGE_CATEGORIES.map(async (cat) => {
-    // Find the category by name
-    const category = await db.category.findFirst({
-      where: { name: cat.name },
+    // Find the category — try slug first (more reliable), then name fallback
+    let category = await db.category.findFirst({
+      where: { slug: cat.slug },
     });
 
-    if (!category) return { ...cat, slug: '', products: [] };
+    if (!category) {
+      category = await db.category.findFirst({
+        where: { name: cat.name },
+      });
+    }
+
+    if (!category) return { ...cat, slug: cat.slug, products: [] };
 
     // Get subcategories
     const subcategories = await db.category.findMany({

@@ -18,12 +18,12 @@ const CATEGORY_RULES = [
   { tags: ["Parah/Parts"], category: ["Books", "Quran", "Parah Parts"] },
   { tags: ["Mushaf", "Quran (Mushaf)"], category: ["Books", "Quran", "Mushaf"] },
   // === Hadith ===
-  { tags: ["Sahah e Sitta"], category: ["Books", "Hadith", "Sahah e Sitta"] },
+  { tags: ["Sahah e Sitta", "Sahahe Sitta"], category: ["Books", "Hadith", "Sahah e Sitta"] },
   { tags: ["Ahadith e Nabvi"], category: ["Books", "Hadith", "Ahadith e Nabvi"] },
   { tags: ["Ahadith Qudsi"], category: ["Books", "Hadith", "Ahadith Qudsi"] },
   { tags: ["Hadith Quran Hadith", "Hadith Publications", "Hadith Quran & Hadith"], category: ["Books", "Hadith"] },
   // === Biography ===
-  { tags: ["Prophet's Seerah", "Seerah Books of Prophet ﷺ"], category: ["Books", "Biography", "Prophets Seerah"] },
+  { tags: ["Prophet's Seerah", "Seerah Books of Prophet ﷺ", "Seerah"], category: ["Books", "Biography", "Prophets Seerah"] },
   { tags: ["Companions of Prophet (SAW)", "Seerat e Shabah"], category: ["Books", "Biography", "Companions"] },
   { tags: ["Imams & Scholars"], category: ["Books", "Biography", "Imams Scholars"] },
   { tags: ["Biography"], category: ["Books", "Biography"] },
@@ -65,6 +65,9 @@ const CATEGORY_RULES = [
   { tags: ["Arabic Car Hangings"], category: ["Islamic Products", "Arabic Car Hangings"] },
   { tags: ["Islamic Caps/Shumagh Romal", "Prayer Cap"], category: ["Islamic Products", "Islamic Caps"] },
   { tags: ["Hajj Umrah Essentials"], category: ["Islamic Products", "Hajj Umrah Essentials"] },
+  // === Publisher Collections (must be BEFORE generic catch-all) ===
+  { tags: ["Goodword"], category: ["Books", "Goodword Books"] },
+  { tags: ["IIPH"], category: ["Books", "IIPH"] },
   // === Generic catch-all (MUST be last) ===
   { tags: ["Books", "All Books"], category: ["Books"] },
   { tags: ["Products", "Other Products", "All Others", "Others"], category: ["Books", "General"] },
@@ -78,14 +81,14 @@ const SKIP_TAGS = new Set([
   "Darussalam Publishers", "Darussalam Research Center", "Darul Iblagh",
   "Daar ul Noor Islamabad", "Darul Khalood", "Ammanulla Vadakkangra",
   // Collection utility tags
-  "Darussalam", "Goodword", "Arabic Books",
+  "Darussalam", "Arabic Books",
 ]);
 
 // Publisher names that should NEVER become categories
 const PUBLISHER_TAGS = new Set([
   "Darussalam Publishers", "Darussalam Research Center", "Darul Iblagh",
   "Daar ul Noor Islamabad", "Darul Khalood", "Ammanulla Vadakkangra",
-  "Darussalam", "Goodword",
+  "Darussalam",
 ]);
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

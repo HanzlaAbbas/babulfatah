@@ -211,7 +211,7 @@ function SlideContent({
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 w-full">
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-7xl mx-auto ${isRight ? '[direction:rtl]' : ''}`}>
           {/* ── Text Content ── */}
-          <div className={`lg:col-span-7 space-y-3 sm:space-y-4 md:space-y-6 py-6 sm:py-10 md:py-16 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
+          <div className={`lg:col-span-7 space-y-2 sm:space-y-4 md:space-y-6 py-4 sm:py-8 md:py-14 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
             {/* Badge */}
             <StaggeredChild index={0} isActive={isActive}>
               <div
@@ -282,7 +282,7 @@ function SlideContent({
 
             {/* CTA Buttons */}
             <StaggeredChild index={5} isActive={isActive}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3 pt-2 sm:pt-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 pt-1 sm:pt-3">
                 <Button
                   size="lg"
                   className="group font-semibold px-6 sm:px-7 h-10 sm:h-12 text-[13px] sm:text-base rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] w-full sm:w-auto"
@@ -511,7 +511,7 @@ export function HeroSlider() {
 
   return (
     <section
-      className="relative overflow-hidden bg-brand-dark select-none"
+      className="relative bg-brand-dark select-none"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
@@ -560,7 +560,7 @@ export function HeroSlider() {
       <IslamicOverlay accent={currentSlide.accent} />
 
       {/* ── Slide Content ── */}
-      <div className="relative z-20 min-h-[420px] sm:min-h-[520px] md:min-h-[680px] lg:min-h-[88vh] pb-20 sm:pb-24 md:pb-28">
+      <div className="relative z-20 min-h-[380px] sm:min-h-[480px] md:min-h-[620px] lg:min-h-[80vh] pb-16 sm:pb-20 md:pb-24">
         {slides.map((slide) => (
           <SlideContent
             key={slide.id}

@@ -37,12 +37,11 @@ interface CategoryNode {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-/** Hardcoded navbar category pills — curated list */
+/** Hardcoded navbar category pills — curated list (7 items) */
 const NAV_PILLS = [
   { label: 'All Books', href: '/shop', highlight: false },
-  { label: 'Goodword', href: '/shop?category=goodword-books', highlight: true, icon: 'star' as const },
-  { label: 'IIPH', href: '/shop?category=iiph', highlight: true, icon: 'book' as const },
-  { label: 'Women', href: '/shop?category=women', highlight: false },
+  { label: 'Goodword', href: '/search?q=goodword', highlight: true, icon: 'star' as const },
+  { label: 'IIPH Women', href: '/shop?category=women', highlight: true, icon: 'book' as const },
   { label: 'Tafseer', href: '/shop?category=tafseer', highlight: false },
   { label: 'Hadith', href: '/shop?category=hadith', highlight: false },
   { label: 'Biography', href: '/shop?category=biography', highlight: false },
