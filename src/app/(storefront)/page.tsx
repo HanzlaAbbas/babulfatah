@@ -1,54 +1,64 @@
 import { db } from '@/lib/db';
 import { HeroSlider } from '@/components/storefront/hero-slider';
 import { BenefitsBar } from '@/components/storefront/benefits-bar';
-import { BestSellersGrid } from '@/components/storefront/best-sellers-grid';
-import { FeaturedProductsTabs } from '@/components/storefront/featured-products-tabs';
-import { CategoryShowcase } from '@/components/storefront/category-showcase';
-import { FeaturedCollection } from '@/components/storefront/featured-collection';
-import { TrustSection } from '@/components/storefront/trust-section';
-import { CtaBanner } from '@/components/storefront/cta-banner';
-import type { TabCategory } from '@/components/storefront/featured-products-tabs';
+import { CategoryProductRow } from '@/components/storefront/category-product-row';
+import { TrustBanner } from '@/components/storefront/trust-banner';
+import { MobileStickyBar } from '@/components/storefront/mobile-sticky-bar';
 
-// ── Dynamic Rendering — fetch data at request time ────────────────
-export const dynamic = 'force-dynamic';
+// ─── Category definitions for homepage product rows ──────────────────────────
 
-// ─── Tab category names for Featured Products ─────────────────────────────────
-
-const tabCategoryNames = [
-  'Education',
-  'Biography',
-  'Family',
-  'Hadith',
-  'Quran',
-  'Fiqh',
-  'Pillars Of Islam',
-  'Women',
-];
+const HOMEPAGE_CATEGORIES = [
+  {
+    name: 'Children',
+    title: "Children's Islamic Library",
+    subtitle: 'Goodword & IIPH — Fun and educational Islamic books for kids',
+  },
+  {
+    name: 'Quran',
+    title: 'Quran Collection',
+    subtitle: 'Translations, Tafseer, and Tajweed guides',
+  },
+  {
+    name: 'Prophets Seerah',
+    title: "Prophet's Biography",
+    subtitle: 'Seerah books from authentic sources',
+  },
+  {
+    name: 'Hadith',
+    title: 'Hadith Collections',
+    subtitle: 'Sahih Bukhari, Muslim, Tirmidhi and more',
+  },
+  {
+    name: 'Fiqh',
+    title: 'Islamic Jurisprudence',
+    subtitle: 'Hanafi, Shafi, Maliki & Hanbali schools of thought',
+  },
+] as const;
 
 // ─── Homepage Server Component ──────────────────────────────────────────────
 
 export default async function HomePage() {
-  // ── Parallel data fetching ──
+  // ── Parallel data fetching for all 5 categories + total count ──
 
-  // 1. Fetch tabbed products (for FeaturedProductsTabs)
-  const tabDataPromises = tabCategoryNames.map(async (catName) => {
-    // Find the category (direct child of a root category)
+  const categoryDataPromises = HOMEPAGE_CATEGORIES.map(async (cat) => {
+    // Find the category by name
     const category = await db.category.findFirst({
-      where: { name: catName },
+      where: { name: cat.name },
     });
 
-    if (!category) return { name: catName, products: [] };
+    if (!category) return { ...cat, slug: '', products: [] };
 
-    // Get products from this category AND its subcategories
+    // Get subcategories
     const subcategories = await db.category.findMany({
       where: { parentId: category.id },
       select: { id: true },
     });
     const allCategoryIds = [category.id, ...subcategories.map((s) => s.id)];
 
+    // Fetch up to 8 products
     const products = await db.product.findMany({
       where: { categoryId: { in: allCategoryIds } },
-      take: 12,
+      take: 8,
       orderBy: [
         { stock: 'desc' },
         { createdAt: 'desc' },
@@ -60,109 +70,37 @@ export default async function HomePage() {
       },
     });
 
-    return { name: catName, products };
+    return {
+      ...cat,
+      slug: category.slug,
+      products: products.map((p) => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        price: p.price,
+        stock: p.stock,
+        language: p.language,
+        images: p.images.map((img) => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText,
+        })),
+        category: { id: p.category.id, name: p.category.name },
+        author: p.author ? { id: p.author.id, name: p.author.name } : null,
+      })),
+    };
   });
 
-  // 2. Fetch showcase categories (Books subcategories + Islamic Products)
-  const showcaseCategoriesPromise = db.category.findMany({
-    where: { parentId: { not: null } },
-    include: {
-      _count: { select: { products: true, subcategories: true } },
-      parent: { select: { name: true } },
-    },
-    orderBy: { name: 'asc' },
-  });
+  // Total product count
+  const totalProductsPromise = db.product.count();
 
-  // 3. Fetch Seerah collection products
-  const seerahCategoryPromise = db.category.findFirst({
-    where: { name: 'Prophets Seerah' },
-    include: { parent: true },
-  });
-
-  const [tabData, allSubcategories, seerahCategory] = await Promise.all([
-    Promise.all(tabDataPromises),
-    showcaseCategoriesPromise,
-    seerahCategoryPromise,
+  const [categoryData, totalProducts] = await Promise.all([
+    Promise.all(categoryDataPromises),
+    totalProductsPromise,
   ]);
 
-  // 4. Fetch best sellers (highest stock, in-stock products)
-  const bestSellers = await db.product.findMany({
-    where: { stock: { gt: 0 } },
-    take: 8,
-    orderBy: [
-      { stock: 'desc' },
-      { createdAt: 'desc' },
-    ],
-    include: {
-      images: { take: 1, orderBy: { order: 'asc' } },
-      author: true,
-      category: true,
-    },
-  });
-
-  // ── Process tab data ──
-  const tabCategories: TabCategory[] = tabData.map((td) => ({
-    name: td.name,
-    products: td.products.map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      stock: p.stock,
-      language: p.language,
-      images: p.images.map((img) => ({
-        id: img.id,
-        url: img.url,
-        altText: img.altText,
-      })),
-      category: { id: p.category.id, name: p.category.name },
-      author: p.author ? { id: p.author.id, name: p.author.name } : null,
-    })),
-  }));
-
-  // Filter out empty tabs
-  const filteredTabCategories = tabCategories.filter(
-    (cat) => cat.products.length > 0
-  );
-
-  // ── Process showcase categories ──
-  // Include direct product count + subcategory product counts
-  const showcaseCategories = allSubcategories
-    .map((cat) => ({
-      name: cat.name,
-      slug: cat.slug,
-      productCount: cat._count.products,
-    }))
-    .sort((a, b) => b.productCount - a.productCount);
-
-  // ── Fetch Seerah products ──
-  let seerahProducts: any[] = [];
-  let seerahCategorySlug = 'prophets-seerah';
-
-  if (seerahCategory) {
-    seerahCategorySlug = seerahCategory.slug;
-    const subcats = await db.category.findMany({
-      where: { parentId: seerahCategory.id },
-      select: { id: true },
-    });
-    const seerahIds = [seerahCategory.id, ...subcats.map((s) => s.id)];
-
-    seerahProducts = await db.product.findMany({
-      where: { categoryId: { in: seerahIds } },
-      take: 10,
-      orderBy: [
-        { stock: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      include: {
-        images: { take: 1, orderBy: { order: 'asc' } },
-        author: true,
-        category: true,
-      },
-    });
-  }
-
   // ── JSON-LD Structured Data ──
+
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -250,79 +188,41 @@ export default async function HomePage() {
       <BenefitsBar />
 
       {/* ═══════════════════════════════════════════════════════════
-          3. Best Sellers Grid
+          3. Category Product Rows — horizontal scrollable (5 rows)
          ═══════════════════════════════════════════════════════════ */}
-      {bestSellers.length > 0 && (
-        <BestSellersGrid
-          products={bestSellers.map((p) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug,
-            price: p.price,
-            stock: p.stock,
-            language: p.language,
-            images: p.images.map((img) => ({
-              id: img.id,
-              url: img.url,
-              altText: img.altText,
-            })),
-            category: { id: p.category.id, name: p.category.name },
-            author: p.author
-              ? { id: p.author.id, name: p.author.name }
-              : null,
-          }))}
-        />
+      {categoryData.map(
+        (cat) =>
+          cat.products.length > 0 && (
+            <CategoryProductRow
+              key={cat.name}
+              title={cat.title}
+              subtitle={cat.subtitle}
+              categorySlug={cat.slug}
+              products={cat.products}
+            />
+          )
       )}
 
       {/* ═══════════════════════════════════════════════════════════
-          4. Featured Products with Category Tabs (carousel)
+          4. Custom Features Wrapper — for user-injected components
          ═══════════════════════════════════════════════════════════ */}
-      {filteredTabCategories.length > 0 && (
-        <FeaturedProductsTabs categories={filteredTabCategories} />
-      )}
+      <section
+        id="custom-features-wrapper"
+        className="py-12 w-full overflow-hidden"
+        aria-label="Custom features section"
+      >
+        {/* Empty — user will inject custom components here */}
+      </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          4. Shop by Categories (horizontal carousel)
+          5. Trust Banner — 4-column feature strip
          ═══════════════════════════════════════════════════════════ */}
-      <CategoryShowcase categories={showcaseCategories} />
+      <TrustBanner />
 
       {/* ═══════════════════════════════════════════════════════════
-          5. Featured Collection: Prophet's Seerah
+          6. Mobile Sticky Bar — cart quick access (client component)
          ═══════════════════════════════════════════════════════════ */}
-      {seerahProducts.length > 0 && (
-        <FeaturedCollection
-          title="Prophet's Seerah"
-          description="Discover the life and teachings of the Prophet Muhammad ﷺ through our carefully curated collection."
-          categorySlug={seerahCategorySlug}
-          products={seerahProducts.map((p) => ({
-            id: p.id,
-            title: p.title,
-            slug: p.slug,
-            price: p.price,
-            stock: p.stock,
-            language: p.language,
-            images: p.images.map((img: any) => ({
-              id: img.id,
-              url: img.url,
-              altText: img.altText,
-            })),
-            category: { id: p.category.id, name: p.category.name },
-            author: p.author
-              ? { id: p.author.id, name: p.author.name }
-              : null,
-          }))}
-        />
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════
-          6. Trust / Why Choose Us Section
-         ═══════════════════════════════════════════════════════════ */}
-      <TrustSection />
-
-      {/* ═══════════════════════════════════════════════════════════
-          7. CTA Banner
-         ═══════════════════════════════════════════════════════════ */}
-      <CtaBanner />
+      <MobileStickyBar />
     </>
   );
 }

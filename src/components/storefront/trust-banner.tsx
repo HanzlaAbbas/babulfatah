@@ -1,48 +1,77 @@
 'use client';
 
-import { Truck, ShieldCheck, Gift, Headphones } from 'lucide-react';
+import { ShieldCheck, Banknote, Truck, MessageCircle } from 'lucide-react';
+import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
-const features = [
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface TrustFeature {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const trustFeatures: TrustFeature[] = [
   {
-    icon: <Truck className="h-6 w-6" />,
-    title: 'COD Available',
-    desc: 'Cash on Delivery nationwide',
+    icon: ShieldCheck,
+    title: '100% Authentic Texts',
+    description: 'Verified content from trusted Islamic publishers and scholars.',
   },
   {
-    icon: <ShieldCheck className="h-6 w-6" />,
-    title: 'Original Guaranteed',
-    desc: '100% authentic Islamic books',
+    icon: Banknote,
+    title: 'Secure COD & JazzCash',
+    description: 'Pay with Cash on Delivery or JazzCash across Pakistan.',
   },
   {
-    icon: <Truck className="h-6 w-6" />,
-    title: 'Fast Delivery',
-    desc: '3-7 business days nationwide',
+    icon: Truck,
+    title: 'Nationwide Delivery',
+    description: 'Reliable shipping to all major cities and towns in Pakistan.',
   },
   {
-    icon: <Gift className="h-6 w-6" />,
-    title: 'Bulk Discounts',
-    desc: 'Special prices for bulk orders',
+    icon: MessageCircle,
+    title: '24/7 WhatsApp Support',
+    description: 'Instant help via WhatsApp for orders and product queries.',
   },
 ];
 
-/**
- * TrustBanner — Brand-colored benefit bar.
- * bg-[#1D333B] with golden #C9A84C icons.
- */
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function TrustBanner() {
+  const animRef = useScrollAnimation();
+
   return (
-    <section className="bg-[#1D333B] py-8 md:py-10">
-      <div className="main-container">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {features.map((feature) => (
-            <div key={feature.title} className="flex items-center gap-3">
-              <div className="shrink-0 h-12 w-12 bg-white/10 flex items-center justify-center text-[#C9A84C]">
-                {feature.icon}
+    <section
+      className="py-10 md:py-14 bg-[#F9FAFB] border-t border-gray-200"
+      ref={animRef}
+    >
+      <div className="container mx-auto px-4 md:px-6">
+        <div
+          className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          data-animate-stagger
+        >
+          {trustFeatures.map((feature) => (
+            <div
+              key={feature.title}
+              data-animate
+              className="flex flex-col items-center text-center px-2"
+            >
+              {/* Icon in golden circle */}
+              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mb-3">
+                <feature.icon
+                  className="h-5 w-5 text-[#C9A84C]"
+                  strokeWidth={1.8}
+                />
               </div>
-              <div>
-                <h3 className="text-[14px] font-bold text-white">{feature.title}</h3>
-                <p className="text-[12px] text-white/60 mt-0.5">{feature.desc}</p>
-              </div>
+              {/* Title */}
+              <h3 className="font-semibold text-sm text-[#1D333B] mb-1">
+                {feature.title}
+              </h3>
+              {/* Description */}
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
