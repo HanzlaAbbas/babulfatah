@@ -511,7 +511,7 @@ export function HeroSlider() {
 
   return (
     <section
-      className="relative bg-brand-dark select-none"
+      className="relative bg-brand-dark select-none overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}

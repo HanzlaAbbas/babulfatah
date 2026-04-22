@@ -9,8 +9,6 @@ import { Prisma } from '@prisma/client';
 
 const PRODUCTS_PER_PAGE = 24;
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'Shop All Books | Bab-ul-Fatah',
   description:
@@ -28,6 +26,28 @@ interface ShopPageProps {
   }>;
 }
 
+/**
+ * Recursively collect ALL descendant category IDs (breadth-first).
+ * This ensures that when a user clicks "Quran" in the navbar, they see
+ * ALL products in Quran, Translation, Tafseer, Tajweed, etc.
+ */
+async function getDescendantCategoryIds(rootId: string): Promise<string[]> {
+  const ids = [rootId];
+  let batch = [rootId];
+
+  // BFS: collect children level by level
+  while (batch.length > 0) {
+    const children = await db.category.findMany({
+      where: { parentId: { in: batch } },
+      select: { id: true },
+    });
+    batch = children.map((c) => c.id);
+    if (batch.length > 0) ids.push(...batch);
+  }
+
+  return ids;
+}
+
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const selectedCategory = params.category || '';
@@ -42,8 +62,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   // ── Build where clause ──
   const andConditions: Prisma.ProductWhereInput[] = [];
 
+  // FIX: When filtering by category, find ALL descendant IDs so nested
+  // products appear. E.g. "Hadith" shows Sahah e Sitta, Ahadith e Nabvi, etc.
   if (selectedCategory) {
-    andConditions.push({ category: { slug: selectedCategory } });
+    const category = await db.category.findFirst({
+      where: { slug: selectedCategory },
+    });
+    if (category) {
+      const allIds = await getDescendantCategoryIds(category.id);
+      andConditions.push({ categoryId: { in: allIds } });
+    }
   }
 
   if (minPrice !== null && !isNaN(minPrice)) {
@@ -89,7 +117,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   ];
 
   // ── Fetch data ──
-  const [categories, totalCount, products] = await Promise.all([
+  const [rootCategories, totalCount, products, activeCategory] = await Promise.all([
     db.category.findMany({
       where: { parentId: null },
       include: { _count: { select: { products: true } } },
@@ -108,10 +136,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       skip: (currentPage - 1) * PRODUCTS_PER_PAGE,
       take: PRODUCTS_PER_PAGE,
     }),
+    // FIX: Look up active category across ALL levels (not just root)
+    selectedCategory
+      ? db.category.findFirst({ where: { slug: selectedCategory } })
+      : Promise.resolve(null),
   ]);
 
+  const categories = rootCategories;
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
-  const activeCategory = categories.find((c) => c.slug === selectedCategory);
 
   // Build URL helper preserving all current params
   const pageUrl = (page: number) => {
@@ -310,7 +342,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   {generatePageNumbers(currentPage, totalPages).map((page, idx) =>
                     page === '...' ? (
                       <span key={`dots-${idx}`} className="px-2 text-sm text-muted-foreground">
-                        …
+                        ...
                       </span>
                     ) : (
                       <Button

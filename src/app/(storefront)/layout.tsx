@@ -7,6 +7,7 @@ import { BackToTop } from '@/components/storefront/back-to-top';
 import { NewsletterPopup } from '@/components/storefront/newsletter-popup';
 import { SocialProofToast } from '@/components/storefront/social-proof-toast';
 import { AIAssistant } from '@/components/storefront/ai-assistant';
+import { MobileBottomNav } from '@/components/storefront/mobile-bottom-nav';
 
 export default function StorefrontLayout({
   children,
@@ -25,6 +26,7 @@ export default function StorefrontLayout({
       <NewsletterPopup />
       <SocialProofToast />
       <AIAssistant />
+      <MobileBottomNav />
     </div>
   );
 }

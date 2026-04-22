@@ -31,15 +31,16 @@ const quickLinks = [
   { href: '/shop?sort=newest', label: 'New Arrivals' },
 ];
 
+// FIX: Updated slugs to match actual DB category slugs from the scrape
 const categories = [
-  { href: '/shop?category=quran', label: 'Quran & Hadith' },
-  { href: '/shop?category=tafseer', label: 'Tafseer' },
-  { href: '/shop?category=biography', label: 'Biography' },
-  { href: '/shop?category=children', label: 'Children' },
-  { href: '/shop?category=prayers', label: 'Prayers' },
-  { href: '/shop?category=hajj-umrah', label: 'Hajj & Umrah' },
+  { href: '/shop?category=quran', label: 'Quran & Tafseer' },
+  { href: '/shop?category=hadith', label: 'Hadith Collections' },
+  { href: '/shop?category=biography', label: 'Biography & Seerah' },
+  { href: '/shop?category=children', label: 'Children\'s Books' },
+  { href: '/shop?category=pillars-of-islam', label: 'Pillars of Islam' },
+  { href: '/shop?category=fiqh', label: 'Fiqh & Islamic Law' },
   { href: '/shop?category=islamic-products', label: 'Islamic Products' },
-  { href: '/shop?category=healthy-foods', label: 'Healthy Foods' },
+  { href: '/shop?category=goodword-books', label: 'Goodword Books' },
 ];
 
 const customerService = [
@@ -210,7 +211,7 @@ export function Footer() {
                 Get 10% Off
               </h4>
               <p className="text-[12px] text-white/50 mb-3">
-                Subscribe & get an instant discount code
+                Subscribe &amp; get an instant discount code
               </p>
               <form
                 onSubmit={handleNewsletterSubmit}

@@ -3,7 +3,7 @@ import { HeroSlider } from '@/components/storefront/hero-slider';
 import { BenefitsBar } from '@/components/storefront/benefits-bar';
 import { CategoryProductRow } from '@/components/storefront/category-product-row';
 import { TrustBanner } from '@/components/storefront/trust-banner';
-import { MobileStickyBar } from '@/components/storefront/mobile-sticky-bar';
+
 
 // ─── Category definitions for homepage product rows ──────────────────────────
 
@@ -31,6 +31,12 @@ const HOMEPAGE_CATEGORIES = [
     slug: 'hadith',
     title: 'Hadith Collections',
     subtitle: 'Sahih Bukhari, Muslim, Tirmidhi and more',
+  },
+  {
+    name: 'Goodword Books',
+    slug: 'goodword-books',
+    title: 'Goodword Books Collection',
+    subtitle: 'Premium Islamic books for all ages by Goodword',
   },
   {
     name: 'Fiqh',
@@ -199,7 +205,7 @@ export default async function HomePage() {
       <BenefitsBar />
 
       {/* ═══════════════════════════════════════════════════════════
-          3. Category Product Rows — horizontal scrollable (5 rows)
+          3. Category Product Rows — horizontal scrollable (6 rows)
          ═══════════════════════════════════════════════════════════ */}
       {categoryData.map(
         (cat) =>
@@ -230,10 +236,7 @@ export default async function HomePage() {
          ═══════════════════════════════════════════════════════════ */}
       <TrustBanner />
 
-      {/* ═══════════════════════════════════════════════════════════
-          6. Mobile Sticky Bar — cart quick access (client component)
-         ═══════════════════════════════════════════════════════════ */}
-      <MobileStickyBar />
+
     </>
   );
 }

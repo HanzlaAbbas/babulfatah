@@ -239,7 +239,7 @@ export function AIAssistant() {
     <>
       {/* ═══ Floating Button ═══ */}
       {!isOpen && (
-        <div style={{ position: 'fixed', bottom: 24, right: 20, zIndex: 99999 }}>
+        <div style={{ position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', right: 16, zIndex: 99999 }}>
           <div
             style={{
               position: 'absolute',
