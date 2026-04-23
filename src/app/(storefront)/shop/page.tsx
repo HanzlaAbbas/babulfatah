@@ -26,28 +26,6 @@ interface ShopPageProps {
   }>;
 }
 
-/**
- * Recursively collect ALL descendant category IDs (breadth-first).
- * This ensures that when a user clicks "Quran" in the navbar, they see
- * ALL products in Quran, Translation, Tafseer, Tajweed, etc.
- */
-async function getDescendantCategoryIds(rootId: string): Promise<string[]> {
-  const ids = [rootId];
-  let batch = [rootId];
-
-  // BFS: collect children level by level
-  while (batch.length > 0) {
-    const children = await db.category.findMany({
-      where: { parentId: { in: batch } },
-      select: { id: true },
-    });
-    batch = children.map((c) => c.id);
-    if (batch.length > 0) ids.push(...batch);
-  }
-
-  return ids;
-}
-
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const selectedCategory = params.category || '';
@@ -59,19 +37,35 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     ? params.lang.split(',').filter(Boolean)
     : [];
 
-  // ── Build where clause ──
+  // ════════════════════════════════════════════════════════════════════
+  //  STEP 1: Resolve all descendant category IDs for selected category
+  //  (recursive CTE — fixes the "empty category" bug)
+  // ════════════════════════════════════════════════════════════════════
+
+  let categoryIds: string[] | null = null;
+  if (selectedCategory) {
+    const rows = await db.$queryRaw<{ id: string }[]>`
+      WITH RECURSIVE cat_tree AS (
+        SELECT id FROM "Category" WHERE slug = ${selectedCategory}
+        UNION ALL
+        SELECT c.id FROM "Category" c JOIN cat_tree ct ON c."parentId" = ct.id
+      )
+      SELECT id FROM cat_tree
+    `;
+    categoryIds = rows.map((r) => r.id);
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  STEP 2: Build where clause (use recursive IDs for category filter)
+  // ════════════════════════════════════════════════════════════════════
+
   const andConditions: Prisma.ProductWhereInput[] = [];
 
-  // FIX: When filtering by category, find ALL descendant IDs so nested
-  // products appear. E.g. "Hadith" shows Sahah e Sitta, Ahadith e Nabvi, etc.
-  if (selectedCategory) {
-    const category = await db.category.findFirst({
-      where: { slug: selectedCategory },
-    });
-    if (category) {
-      const allIds = await getDescendantCategoryIds(category.id);
-      andConditions.push({ categoryId: { in: allIds } });
-    }
+  if (categoryIds && categoryIds.length > 0) {
+    andConditions.push({ categoryId: { in: categoryIds } });
+  } else if (selectedCategory) {
+    // Category slug exists in URL but no categories found — will show empty
+    andConditions.push({ categoryId: '___none___' } as any);
   }
 
   if (minPrice !== null && !isNaN(minPrice)) {
@@ -110,19 +104,46 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       break;
   }
 
-  // Always push in-stock items first, then apply user's sort preference
   const orderBy: Prisma.ProductOrderByWithRelationInput[] = [
     { stock: 'desc' },
     secondarySort,
   ];
 
-  // ── Fetch data ──
-  const [rootCategories, totalCount, products, activeCategory] = await Promise.all([
-    db.category.findMany({
-      where: { parentId: null },
-      include: { _count: { select: { products: true } } },
-      orderBy: { name: 'asc' },
-    }),
+  // ════════════════════════════════════════════════════════════════════
+  //  STEP 3: Fetch categories with RECURSIVE product counts
+  //  (shows total products in entire subtree, not just direct children)
+  // ════════════════════════════════════════════════════════════════════
+
+  interface CategoryWithCount {
+    id: string;
+    name: string;
+    slug: string;
+    parentId: string | null;
+    product_count: number;
+  }
+
+  const categoriesWithCounts = await db.$queryRaw<CategoryWithCount[]>`
+    WITH RECURSIVE cat_tree AS (
+      SELECT id, id as root_id FROM "Category" WHERE "parentId" IS NULL
+      UNION ALL
+      SELECT c.id, ct.root_id FROM "Category" c JOIN cat_tree ct ON c."parentId" = ct.id
+    )
+    SELECT
+      cr.id, cr.name, cr.slug, cr."parentId",
+      COUNT(p.id)::int as product_count
+    FROM "Category" cr
+    LEFT JOIN cat_tree ct ON ct.root_id = cr.id
+    LEFT JOIN "Product" p ON p."categoryId" = ct.id
+    WHERE cr."parentId" IS NULL
+    GROUP BY cr.id, cr.name, cr.slug, cr."parentId"
+    ORDER BY cr.name ASC
+  `;
+
+  // ════════════════════════════════════════════════════════════════════
+  //  STEP 4: Fetch products and total count (parallel)
+  // ════════════════════════════════════════════════════════════════════
+
+  const [totalCount, products] = await Promise.all([
     db.product.count({ where: whereClause }),
     db.product.findMany({
       where: whereClause,
@@ -136,14 +157,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       skip: (currentPage - 1) * PRODUCTS_PER_PAGE,
       take: PRODUCTS_PER_PAGE,
     }),
-    // FIX: Look up active category across ALL levels (not just root)
-    selectedCategory
-      ? db.category.findFirst({ where: { slug: selectedCategory } })
-      : Promise.resolve(null),
   ]);
 
-  const categories = rootCategories;
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
+  const activeCategory = categoriesWithCounts.find((c) => c.slug === selectedCategory);
+  const totalAllProducts = categoriesWithCounts.reduce((sum, c) => sum + c.product_count, 0);
 
   // Build URL helper preserving all current params
   const pageUrl = (page: number) => {
@@ -220,7 +238,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             All Books
           </button>
         </Link>
-        {categories.map((cat) => (
+        {categoriesWithCounts.map((cat) => (
           <Link key={cat.id} href={`/shop?category=${cat.slug}`}>
             <button
               className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
@@ -231,7 +249,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             >
               {cat.name}
               <span className="ml-1.5 text-xs opacity-70">
-                {cat._count.products}
+                {cat.product_count}
               </span>
             </button>
           </Link>
@@ -256,10 +274,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               >
                 <span>All Books</span>
                 <span className="text-xs opacity-60 tabular-nums">
-                  {categories.reduce((sum, c) => sum + c._count.products, 0)}
+                  {totalAllProducts}
                 </span>
               </Link>
-              {categories.map((cat) => (
+              {categoriesWithCounts.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/shop?category=${cat.slug}`}
@@ -271,7 +289,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 >
                   <span>{cat.name}</span>
                   <span className="text-xs opacity-60 tabular-nums">
-                    {cat._count.products}
+                    {cat.product_count}
                   </span>
                 </Link>
               ))}
@@ -338,11 +356,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                     )}
                   </Button>
 
-                  {/* Page numbers */}
                   {generatePageNumbers(currentPage, totalPages).map((page, idx) =>
                     page === '...' ? (
                       <span key={`dots-${idx}`} className="px-2 text-sm text-muted-foreground">
-                        ...
+                        …
                       </span>
                     ) : (
                       <Button
