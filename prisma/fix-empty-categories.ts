@@ -17,11 +17,32 @@
 // ============================================================================
 
 import { PrismaClient } from "@prisma/client";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// ─── Load .env manually (npx tsx doesn't auto-load it like prisma commands do) ──
+const envPath = path.resolve(__dirname, "..", ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIndex = trimmed.indexOf("=");
+    if (eqIndex > 0) {
+      const key = trimmed.slice(0, eqIndex).trim();
+      const val = trimmed.slice(eqIndex + 1).trim().replace(/^["']|["']$/g, "");
+      if (!process.env[key]) process.env[key] = val;
+    }
+  }
+  console.log(`  Loaded env from ${envPath}`);
+} else {
+  console.error(`  ERROR: .env not found at ${envPath}`);
+  process.exit(1);
+}
 
 // ─── Keyword mappings for category matching ─────────────────────────────────
 // Each entry maps a category name (or partial name) to keywords that should
