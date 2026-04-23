@@ -40,8 +40,9 @@ interface CategoryNode {
 /** Hardcoded navbar category pills — curated list (7 items) */
 const NAV_PILLS = [
   { label: 'All Books', href: '/shop', highlight: false },
-  { label: 'Goodword', href: '/search?q=goodword', highlight: true, icon: 'star' as const },
-  { label: 'IIPH Women', href: '/shop?category=women', highlight: true, icon: 'book' as const },
+  { label: 'Goodword', href: '/shop?category=goodword-books', highlight: true, icon: 'star' as const },
+  { label: 'IIPH', href: '/shop?category=iiph', highlight: true, icon: 'book' as const },
+  { label: 'Women', href: '/shop?category=women', highlight: false },
   { label: 'Tafseer', href: '/shop?category=tafseer', highlight: false },
   { label: 'Hadith', href: '/shop?category=hadith', highlight: false },
   { label: 'Biography', href: '/shop?category=biography', highlight: false },
@@ -50,12 +51,11 @@ const NAV_PILLS = [
 
 // ─── Navbar Component ─────────────────────────────────────────────────────────
 // Premium "Scholar's Library" navbar with:
-//   - Sticky solid white header with scroll shadow
-//   - Desktop: Logo + Search icon (left) · Account + Wishlist + Cart (right)
-//   - Mobile: Menu + Search (left) · Logo (center) · Account + Wishlist + Cart (right)
-//   - Hardcoded horizontal category pill nav
-//   - Mobile sheet: accordion categories (from API) + static quick links (NO search)
-//   - All icon buttons enlarged to h-11 w-11 with 22px icons
+//   - Glass-effect sticky header with scroll shadow
+//   - Desktop: Logo (left) + Search (center) + Cart+User (right)
+//   - Hardcoded horizontal category pill nav (no dynamic fetch)
+//   - Mobile: Hamburger (left) + Logo (center) + Cart (right)
+//   - Mobile sheet: accordion categories (from API) + static quick links
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function Navbar() {
@@ -73,7 +73,7 @@ export function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 8);
     };
-    handleScroll();
+    handleScroll(); // initial check
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -107,19 +107,7 @@ export function Navbar() {
     { href: '/shop?category=iiph', label: 'IIPH Books' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
-    { href: '/account', label: 'My Account' },
   ];
-
-  // ── Open full-screen search overlay via Ctrl+K shortcut ──
-  const openSearch = () => {
-    const event = new KeyboardEvent('keydown', {
-      key: 'k',
-      metaKey: false,
-      ctrlKey: true,
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
-  };
 
   return (
     <>
@@ -134,156 +122,190 @@ export function Navbar() {
         }`}
       >
         {/* ── Main Row ── */}
-        <div className="container mx-auto flex items-center h-16 md:h-[68px] px-3 md:px-6 gap-2">
+        <div className="container mx-auto flex items-center h-14 md:h-[60px] px-4 md:px-6 gap-4">
+          {/* ── Mobile: Hamburger (left) ── */}
+          <div className="flex items-center lg:hidden shrink-0">
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
 
-          {/* ════════════════════════════════════════════════════
-              LEFT SIDE: Menu + Search (mobile) / Logo + Search (desktop)
-             ════════════════════════════════════════════════════ */}
-          <div className="flex items-center gap-1 shrink-0">
-
-            {/* ── Mobile: Hamburger Menu ── */}
-            <div className="lg:hidden">
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-11 w-11 text-brand-dark hover:text-brand">
-                    <Menu className="h-[22px] w-[22px]" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="left" className="w-80 p-0">
-                  <SheetHeader className="px-5 pt-6 pb-4 border-b border-border/50">
-                    <SheetTitle className="flex items-center gap-3">
-                      <Image
-                        src="/logo.png"
-                        alt="Bab-ul-Fatah"
-                        width={48}
-                        height={48}
-                        className="h-12 w-auto"
-                      />
-                      <div>
-                        <span className="text-base font-bold text-brand tracking-tight block leading-tight">
-                          Bab-ul-Fatah
-                        </span>
-                        <span className="text-[11px] text-muted-foreground leading-tight">
-                          Islamic Bookstore
-                        </span>
-                      </div>
-                    </SheetTitle>
-                  </SheetHeader>
-
-                  <div className="flex-1 overflow-y-auto scrollbar-thin">
-                    {/* ── Categories Accordion (NO search here) ── */}
-                    {categoryTree.length > 0 && (
-                      <div className="px-4 py-3">
-                        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-golden-dark mb-2 px-1">
-                          Categories
-                        </h4>
-                        <MobileCategoryAccordion
-                          categories={categoryTree}
-                          onClose={() => setMobileOpen(false)}
-                        />
-                      </div>
-                    )}
-
-                    {/* ── Quick Links ── */}
-                    <div className="border-t border-border/40 px-4 pt-3 pb-6">
-                      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
-                        Quick Links
-                      </h4>
-                      <nav className="flex flex-col gap-0.5">
-                        {quickLinks.map((link) => (
-                          <Link
-                            key={link.href + link.label}
-                            href={link.href}
-                            onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:text-brand transition-colors"
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                      </nav>
+              <SheetContent side="left" className="w-80 p-0">
+                <SheetHeader className="px-5 pt-6 pb-4 border-b border-border/50">
+                  <SheetTitle className="flex items-center gap-3">
+                    <Image
+                      src="/logo.png"
+                      alt="Bab-ul-Fatah"
+                      width={40}
+                      height={40}
+                      className="h-8 w-auto rounded object-contain"
+                    />
+                    <div>
+                      <span className="text-base font-bold text-brand tracking-tight block leading-tight">
+                        Bab-ul-Fatah
+                      </span>
+                      <span className="text-[11px] text-muted-foreground leading-tight">
+                        Islamic Bookstore
+                      </span>
                     </div>
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="flex-1 overflow-y-auto scrollbar-thin">
+                  {/* ── Mobile Search ── */}
+                  <div className="px-4 py-3">
+                    <SearchBar variant="mobile" />
                   </div>
-                </SheetContent>
-              </Sheet>
-            </div>
 
-            {/* ── Search Icon — triggers full-screen search overlay ── */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-11 w-11 text-brand-dark hover:text-brand"
-              onClick={openSearch}
-              aria-label="Search"
-            >
-              <Search className="h-[22px] w-[22px]" />
-            </Button>
+                  {/* ── Categories Accordion ── */}
+                  {categoryTree.length > 0 && (
+                    <div className="px-4 pb-3">
+                      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-golden-dark mb-2 px-1">
+                        Categories
+                      </h4>
+                      <MobileCategoryAccordion
+                        categories={categoryTree}
+                        onClose={() => setMobileOpen(false)}
+                      />
+                    </div>
+                  )}
 
-            {/* ── Desktop Logo (left) — enlarged, no rounded ── */}
-            <Link href="/" className="shrink-0 hidden lg:block ml-1">
-              <Image
-                src="/logo.png"
-                alt="Bab-ul-Fatah"
-                width={56}
-                height={56}
-                priority
-                className="h-14 w-auto"
-              />
-            </Link>
-
-            {/* ── Mobile Logo (center) — enlarged, no rounded ── */}
-            <Link href="/" className="shrink-0 lg:hidden absolute left-1/2 -translate-x-1/2">
-              <Image
-                src="/logo.png"
-                alt="Bab-ul-Fatah"
-                width={44}
-                height={44}
-                priority
-                className="h-11 w-auto"
-              />
-            </Link>
+                  {/* ── Quick Links ── */}
+                  <div className="border-t border-border/40 px-4 pt-3 pb-6">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
+                      Quick Links
+                    </h4>
+                    <nav className="flex flex-col gap-0.5">
+                      {quickLinks.map((link) => (
+                        <Link
+                          key={link.href + link.label}
+                          href={link.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:text-brand transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
-          {/* ── Spacer ── */}
-          <div className="flex-1" />
+          {/* ── Logo (desktop: left, mobile: center) ── */}
+          <Link
+            href="/"
+            className="shrink-0 hidden lg:block"
+          >
+            <Image
+              src="/logo.png"
+              alt="Bab-ul-Fatah"
+              width={44}
+              height={44}
+              priority
+              className="h-10 w-auto rounded object-contain"
+            />
+          </Link>
 
-          {/* ════════════════════════════════════════════════════
-              RIGHT SIDE: Account + Wishlist + Cart
-             ════════════════════════════════════════════════════ */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {/* Account */}
-            <Link
-              href="/account"
-              className="h-11 w-11 flex items-center justify-center text-brand-dark hover:text-brand transition-colors rounded-full hover:bg-muted/50"
-              aria-label="Account"
-            >
-              <User className="h-[22px] w-[22px]" />
-            </Link>
+          {/* Mobile center logo */}
+          <Link href="/" className="shrink-0 lg:hidden absolute left-1/2 -translate-x-1/2">
+            <Image
+              src="/logo.png"
+              alt="Bab-ul-Fatah"
+              width={36}
+              height={36}
+              priority
+              className="h-8 w-auto rounded object-contain"
+            />
+          </Link>
+
+          {/* ── Desktop: Center Search Bar ── */}
+          <div className="hidden lg:flex flex-1 justify-center">
+            <div className="w-full max-w-md">
+              <SearchBar variant="navbar" />
+            </div>
+          </div>
+
+          {/* ── Desktop: Right Actions ── */}
+          <div className="hidden lg:flex items-center gap-1 shrink-0">
+            {/* User / Account */}
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-brand">
+              <User className="h-[18px] w-[18px]" />
+              <span className="sr-only">Account</span>
+            </Button>
 
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className="h-11 w-11 flex items-center justify-center text-brand-dark hover:text-brand transition-colors rounded-full hover:bg-muted/50"
-              aria-label="Wishlist"
+              className="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-brand transition-colors"
             >
-              <Heart className="h-[22px] w-[22px]" />
+              <Heart className="h-[18px] w-[18px]" />
+              <span className="sr-only">Wishlist</span>
             </Link>
 
             {/* Cart */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-11 w-11 text-brand-dark hover:text-brand"
+              className="relative h-9 w-9 text-muted-foreground hover:text-brand"
               onClick={() => openCart()}
-              aria-label="Shopping cart"
             >
-              <ShoppingCart className="h-[22px] w-[22px]" />
+              <ShoppingCart className="h-[18px] w-[18px]" />
               {totalItems() > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-5 min-w-[20px] rounded-full bg-golden text-[10px] font-bold text-golden-foreground flex items-center justify-center px-1">
+                <span className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] rounded-full bg-golden text-[10px] font-bold text-golden-foreground flex items-center justify-center px-1">
                   {totalItems()}
                 </span>
               )}
+              <span className="sr-only">Shopping cart</span>
+            </Button>
+          </div>
+
+          {/* ── Mobile: Cart (right) ── */}
+          <div className="flex items-center gap-1 lg:hidden shrink-0 ml-auto">
+            {/* Mobile Wishlist */}
+            <Link
+              href="/wishlist"
+              className="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-brand transition-colors"
+            >
+              <Heart className="h-[18px] w-[18px]" />
+              <span className="sr-only">Wishlist</span>
+            </Link>
+            {/* Mobile search trigger */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground"
+              onClick={() => {
+                // Open mobile search by dispatching Ctrl+K event
+                const event = new KeyboardEvent('keydown', {
+                  key: 'k',
+                  metaKey: false,
+                  ctrlKey: true,
+                  bubbles: true,
+                });
+                document.dispatchEvent(event);
+              }}
+            >
+              <Search className="h-[18px] w-[18px]" />
+              <span className="sr-only">Search</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9 text-muted-foreground hover:text-brand"
+              onClick={() => openCart()}
+            >
+              <ShoppingCart className="h-[18px] w-[18px]" />
+              {totalItems() > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] rounded-full bg-golden text-[10px] font-bold text-golden-foreground flex items-center justify-center px-1">
+                  {totalItems()}
+                </span>
+              )}
+              <span className="sr-only">Shopping cart</span>
             </Button>
           </div>
         </div>
@@ -292,7 +314,7 @@ export function Navbar() {
             CATEGORY NAV — Hardcoded horizontal pill bar
             ══════════════════════════════════════════════════════════════════════ */}
         <div className="border-t border-border/30 bg-white">
-          <div className="container mx-auto px-3 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             {/* ── Desktop: static pills ── */}
             <div className="hidden lg:flex items-center h-10 gap-1">
               {NAV_PILLS.map((pill) => (
@@ -313,7 +335,7 @@ export function Navbar() {
             </div>
 
             {/* ── Mobile: horizontal scrollable pills ── */}
-            <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-3 px-3">
+            <div className="flex lg:hidden items-center h-10 gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4">
               {NAV_PILLS.map((pill) => (
                 <Link
                   key={pill.label}
@@ -333,11 +355,6 @@ export function Navbar() {
           </div>
         </div>
       </header>
-
-      {/* ── Hidden SearchBar — provides Ctrl+K overlay handler ── */}
-      <div className="absolute h-0 w-0 overflow-hidden" aria-hidden="true">
-        <SearchBar variant="mobile" />
-      </div>
 
       {/* ── Cart Sheet ── */}
       <CartSheet

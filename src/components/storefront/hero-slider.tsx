@@ -208,10 +208,10 @@ function SlideContent({
         pointerEvents: isActive ? 'auto' : 'none',
       }}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 w-full">
+      <div className="container mx-auto px-3 sm:px-4 md:px-5 lg:px-8 xl:px-12 w-full">
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-7xl mx-auto ${isRight ? '[direction:rtl]' : ''}`}>
           {/* ── Text Content ── */}
-          <div className={`lg:col-span-7 space-y-2 sm:space-y-4 md:space-y-6 py-4 sm:py-8 md:py-14 lg:py-20 ${isRight ? '[direction:ltr]' : ''}`}>
+          <div className={`lg:col-span-7 space-y-2 sm:space-y-4 md:space-y-6 py-4 sm:py-8 md:py-14 lg:py-20 overflow-hidden ${isRight ? '[direction:ltr]' : ''}`}>
             {/* Badge */}
             <StaggeredChild index={0} isActive={isActive}>
               <div
@@ -239,11 +239,11 @@ function SlideContent({
             {/* Title */}
             <StaggeredChild index={2} isActive={isActive}>
               <div className="space-y-0.5 sm:space-y-1">
-                <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold text-white font-serif tracking-tight leading-[1.08]">
+                <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold text-white font-serif tracking-tight leading-[1.08] overflow-hidden">
                   {slide.title}
                 </h1>
                 <h1
-                  className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold font-serif tracking-tight leading-[1.08]"
+                  className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4.25rem] font-bold font-serif tracking-tight leading-[1.08] overflow-hidden"
                   style={{ color: colors.primary }}
                 >
                   {slide.titleHighlight}
@@ -253,7 +253,7 @@ function SlideContent({
 
             {/* Description */}
             <StaggeredChild index={3} isActive={isActive}>
-              <p className="text-white/60 sm:text-white/65 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed">
+              <p className="text-white/60 sm:text-white/65 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed overflow-hidden">
                 {slide.description}
               </p>
             </StaggeredChild>
@@ -560,7 +560,7 @@ export function HeroSlider() {
       <IslamicOverlay accent={currentSlide.accent} />
 
       {/* ── Slide Content ── */}
-      <div className="relative z-20 min-h-[380px] sm:min-h-[480px] md:min-h-[620px] lg:min-h-[80vh] pb-16 sm:pb-20 md:pb-24">
+      <div className="relative z-20 min-h-[380px] sm:min-h-[480px] md:min-h-[620px] lg:min-h-[80vh] pb-16 sm:pb-20 md:pb-24 p-3 sm:p-4 md:p-5" style={{ maxWidth: '100%', overflow: 'hidden' }}>
         {slides.map((slide) => (
           <SlideContent
             key={slide.id}
@@ -574,14 +574,14 @@ export function HeroSlider() {
       {/* ── Navigation Arrows — positioned above timeline ── */}
       <button
         onClick={goPrev}
-        className="absolute left-3 sm:left-6 top-[45%] -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute left-2 sm:left-4 md:left-6 top-[45%] -translate-y-1/2 z-30 w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
       </button>
       <button
         onClick={goNext}
-        className="absolute right-3 sm:right-6 top-[45%] -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
+        className="absolute right-2 sm:right-4 md:right-6 top-[45%] -translate-y-1/2 z-30 w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-white/[0.04] backdrop-blur-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] opacity-0 hover:opacity-100 focus:opacity-100 transition-all duration-300 group"
         aria-label="Next slide"
       >
         <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
@@ -597,7 +597,7 @@ export function HeroSlider() {
           }}
         />
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 py-4 sm:py-5">
+        <div className="container mx-auto px-3 sm:px-4 md:px-5 lg:px-8 xl:px-12 py-4 sm:py-5">
           <div className="flex items-center gap-4 sm:gap-6">
             {/* Slide counter */}
             <div className="hidden sm:flex items-center gap-2.5 shrink-0">
