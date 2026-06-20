@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, Minimize2, Maximize2, Trash2, Sparkles, AlertCircle, ShoppingCart, ExternalLink, Package, Search } from 'lucide-react';
+import { X, Send, Loader2, Minimize2, Maximize2, Trash2, Sparkles, AlertCircle, ExternalLink, Package, Search } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
 
@@ -237,9 +237,10 @@ function renderMarkdown(text: string): React.ReactNode[] {
   let keyIdx = 0;
 
   const renderInline = (line: string, key: string) => {
-    // Handle [text](url) links
-    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\(([^)]+)\))/g);
+    // Handle [text](url) links — use non-capturing inner groups to avoid undefined entries
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[(?:[^\]]+)\]\((?:[^)]+)\))/g);
     return parts.map((part, i) => {
+      if (!part) return null; // skip empty/undefined parts from split
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
           <strong key={`${key}-b${i}`} style={{ fontWeight: 600, color: '#1D333B' }}>
@@ -255,7 +256,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
         );
       }
       // Match [text](url)
-      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)/);
       if (linkMatch) {
         return (
           <a
