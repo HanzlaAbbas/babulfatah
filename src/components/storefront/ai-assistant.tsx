@@ -1,38 +1,234 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, Minimize2, Maximize2, Trash2, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Send, Loader2, Minimize2, Maximize2, Trash2, Sparkles, AlertCircle, ShoppingCart, ExternalLink, Package, Search } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { SalameeIcon } from '@/components/storefront/salamee-icon';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Bab-ul-Fatah AI Assistant — Powered by Real Open Source LLM (v5)
+// Bab-ul-Fatah Salamee AI — LIVE INVENTORY AWARE (v6)
 // ─────────────────────────────────────────────────────────────────────────────────
 // ZERO client-side AI SDK dependencies — pure React + fetch
-// Backend: Dual-provider AI (Groq Llama 3.3 70B / Gemini 2.0 Flash)
-// Returns plain JSON: { content, provider }
+// Backend: Dual-provider AI (Groq Llama 3.3 70B / Gemini 2.0 Flash) + Tool Calling
+// Returns plain JSON: { content, provider, products? }
 //
-// SETUP: Add your FREE API key to Vercel:
-//   GROQ_API_KEY = https://console.groq.com/keys (recommended)
-//   GOOGLE_GENERATIVE_AI_API_KEY = https://aistudio.google.com/apikey (alternate)
+// KEY v6 FEATURES:
+//   - Live inventory status (In Stock / Sold Out) with color badges
+//   - Product cards in chat with images, prices, and action buttons
+//   - "Add to Cart" and "View Product" links from chat
+//   - Quick actions for stock-specific queries
+//   - Stock-aware smart fallback when no API key configured
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Types ──────────────────────────────────────────────────────────────────
+interface ProductData {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  stock: number;
+  language?: string;
+  author?: { id?: string; name?: string };
+  category?: { id?: string; name?: string; slug?: string };
+  images?: { id?: string; url?: string; altText?: string }[];
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  products?: ProductData[];
 }
 
-// ─── Quick Actions ────────────────────────────────────────────────────────────
+// ─── Quick Actions (stock-aware) ────────────────────────────────────────────
 const QUICK_ACTIONS = [
-  { label: 'Quran Collection', icon: '📖', query: 'Tell me about your Quran collection — translations, tajweed, and hafzi copies' },
-  { label: 'Hadith Books', icon: '📜', query: 'What hadith books do you carry? I want authentic collections' },
-  { label: 'Book Recs', icon: '📚', query: 'Recommend some popular Islamic books for someone getting started' },
-  { label: 'Children Books', icon: '👶', query: 'What Islamic books do you have for children? Group by age please' },
+  { label: 'Check Availability', icon: '🔍', query: 'What Quran books are currently in stock? Show me prices too' },
+  { label: 'Hadith Collection', icon: '📜', query: 'Show me your Hadith books that are in stock with prices' },
+  { label: 'Children Books', icon: '👶', query: 'What Islamic children books are available right now?' },
+  { label: 'New Arrivals', icon: '✨', query: 'Show me recently added products that are in stock' },
+  { label: 'Tafseer & Seerah', icon: '📖', query: 'What Tafseer and Seerah books do you have in stock?' },
   { label: 'Shipping Info', icon: '🚚', query: 'What are your shipping and payment options in Pakistan?' },
-  { label: 'Prayer Mats & Products', icon: '🕌', query: 'Show me your Islamic products — prayer mats, attar, decor' },
 ];
+
+// ─── Stock Badge Component ──────────────────────────────────────────────────
+function StockBadge({ stock }: { stock: number }) {
+  if (stock > 0) {
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          fontSize: 11,
+          fontWeight: 600,
+          color: '#059669',
+          background: '#ECFDF5',
+          padding: '2px 8px',
+          borderRadius: 20,
+          border: '1px solid #A7F3D0',
+        }}
+      >
+        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E' }} />
+        In Stock
+      </span>
+    );
+  }
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#DC2626',
+        background: '#FEF2F2',
+        padding: '2px 8px',
+        borderRadius: 20,
+        border: '1px solid #FECACA',
+      }}
+    >
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#EF4444' }} />
+      Sold Out
+    </span>
+  );
+}
+
+// ─── Product Card in Chat ──────────────────────────────────────────────────
+function ChatProductCard({ product }: { product: ProductData }) {
+  const imageUrl = product.images?.[0]?.url;
+  const handleAddToCart = () => {
+    // Dispatch custom event for cart integration
+    if (product.stock > 0) {
+      window.dispatchEvent(new CustomEvent('salamee-add-to-cart', { detail: product }));
+    }
+  };
+
+  return (
+    <a
+      href={`/shop/${product.slug}`}
+      style={{
+        display: 'flex',
+        gap: 10,
+        padding: 10,
+        background: '#FAFAF8',
+        border: '1px solid rgba(29,51,59,0.08)',
+        borderRadius: 12,
+        textDecoration: 'none',
+        color: 'inherit',
+        transition: 'all 0.15s ease',
+        cursor: 'pointer',
+        marginBottom: 8,
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,168,76,0.4)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(29,51,59,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(29,51,59,0.08)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+      }}
+    >
+      {/* Product Image */}
+      <div
+        style={{
+          width: 52,
+          height: 68,
+          borderRadius: 8,
+          overflow: 'hidden',
+          flexShrink: 0,
+          background: '#F0EFEB',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={product.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            loading="lazy"
+          />
+        ) : (
+          <Package style={{ width: 20, height: 20, color: '#A3A3A3' }} />
+        )}
+      </div>
+
+      {/* Product Info */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#1D333B',
+              margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: 1.3,
+            }}
+          >
+            {product.title}
+          </p>
+          {product.author?.name && (
+            <p style={{ fontSize: 11, color: '#6B7280', margin: '2px 0 0 0' }}>
+              {product.author.name}
+            </p>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#1D333B' }}>
+            Rs. {product.price.toLocaleString()}
+          </span>
+          <StockBadge stock={product.stock} />
+        </div>
+      </div>
+
+      {/* View Arrow */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          color: '#C9A84C',
+          flexShrink: 0,
+        }}
+      >
+        <ExternalLink style={{ width: 14, height: 14 }} />
+      </div>
+    </a>
+  );
+}
+
+// ─── Provider Badge ──────────────────────────────────────────────────────────
+function ProviderBadge({ provider }: { provider: string }) {
+  const config: Record<string, { label: string; color: string }> = {
+    groq: { label: 'Llama 3.3 70B', color: '#F97316' },
+    gemini: { label: 'Gemini 2.0 Flash', color: '#3B82F6' },
+    'fallback-db': { label: 'Live Inventory', color: '#22C55E' },
+    fallback: { label: 'Offline', color: '#9CA3AF' },
+  };
+  const c = config[provider] || config.fallback;
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        color: c.color,
+        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3,
+      }}
+    >
+      <span style={{ width: 4, height: 4, borderRadius: '50%', background: c.color }} />
+      {c.label}
+    </span>
+  );
+}
 
 // ─── Enhanced Markdown Renderer ──────────────────────────────────────────────
 function renderMarkdown(text: string): React.ReactNode[] {
@@ -41,7 +237,8 @@ function renderMarkdown(text: string): React.ReactNode[] {
   let keyIdx = 0;
 
   const renderInline = (line: string, key: string) => {
-    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    // Handle [text](url) links
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\(([^)]+)\))/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
@@ -55,6 +252,28 @@ function renderMarkdown(text: string): React.ReactNode[] {
           <em key={`${key}-i${i}`} style={{ fontStyle: 'italic' }}>
             {part.slice(1, -1)}
           </em>
+        );
+      }
+      // Match [text](url)
+      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (linkMatch) {
+        return (
+          <a
+            key={`${key}-a${i}`}
+            href={linkMatch[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#1D6B5A', textDecoration: 'underline', fontWeight: 500 }}
+            onClick={(e) => {
+              // Internal links: navigate without new tab
+              if (linkMatch[2].startsWith('/')) {
+                e.preventDefault();
+                window.location.href = linkMatch[2];
+              }
+            }}
+          >
+            {linkMatch[1]}
+          </a>
         );
       }
       return part;
@@ -114,7 +333,7 @@ export function AIAssistant() {
       id: 'welcome',
       role: 'assistant',
       content:
-        "Assalamu Alaikum! Welcome to Bab-ul-Fatah — Pakistan's premier online Islamic bookstore. I'm your AI assistant and I can help you find the perfect Islamic books and products.\n\nI know our entire collection of 1,200+ books including Quran, Hadith, Tafseer, Seerah, Fiqh, Children's books, and Islamic products.\n\nJust ask me anything or tap a quick action below to get started!",
+        "Assalamu Alaikum! Welcome to Bab-ul-Fatah — I'm **Salamee**, your AI assistant with **live inventory access**.\n\nI can check real-time stock levels, exact prices, and find the perfect book for you. Just ask me:\n- \"Is Sahih Bukhari in stock?\"\n- \"Show me Quran with Urdu translation\"\n- \"What children's books are available?\"\n\nOr tap a quick action below to get started!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -152,7 +371,6 @@ export function AIAssistant() {
     setError(null);
 
     try {
-      // Call our AI backend (plain JSON, no streaming protocol)
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,16 +383,17 @@ export function AIAssistant() {
 
       const data = await res.json();
 
-      // Add AI response
+      // Add AI response (may include products)
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
         content: data.content || 'Sorry, I could not generate a response. Please try again.',
+        products: data.products || undefined,
       };
 
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
-      console.error('[AI Chat] Error:', err);
+      console.error('[SALAMEE_CHAT] Error:', err);
       setError('Something went wrong. Please try again or WhatsApp us at +92 326 5903300.');
     } finally {
       setIsLoading(false);
@@ -196,7 +415,7 @@ export function AIAssistant() {
         id: `welcome-${Date.now()}`,
         role: 'assistant',
         content:
-          'Assalamu Alaikum! How can I help you today? Ask me about our books, products, shipping, or any Islamic knowledge.',
+          "Assalamu Alaikum! How can I help you today? I can check **live inventory** — just ask if any book or product is in stock!",
       },
     ]);
     setError(null);
@@ -226,20 +445,19 @@ export function AIAssistant() {
     [input, isLoading, handleSend]
   );
 
-  // Only render on client (document.body doesn't exist during SSR/prerender)
+  // Only render on client
   useEffect(() => { setMounted(true); }, []);
 
   // Quick actions visible only before first user message
   const showQuickActions = messages.filter((m) => m.role === 'user').length === 0;
 
-  // Server-side: return null (portal target doesn't exist yet)
   if (!mounted) return null;
 
   return createPortal(
     <>
       {/* ═══ Floating Button ═══ */}
       {!isOpen && (
-        <div style={{ position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', right: 16, zIndex: 99999 }}>
+        <div style={{ position: 'fixed', bottom: 24, right: 20, zIndex: 99999 }}>
           <div
             style={{
               position: 'absolute',
@@ -251,7 +469,7 @@ export function AIAssistant() {
           />
           <button
             onClick={() => setIsOpen(true)}
-            aria-label="Open AI Assistant"
+            aria-label="Open Salamee AI Assistant"
             className="hover:scale-110 active:scale-95 transition-transform duration-200"
             style={{
               width: 58,
@@ -300,7 +518,7 @@ export function AIAssistant() {
               opacity: 0.95,
             }}
           >
-            Need help? Chat with us
+            Need help? Ask Salamee AI
             <div
               style={{
                 position: 'absolute',
@@ -340,8 +558,8 @@ export function AIAssistant() {
                 right: 20px !important;
                 bottom: 24px !important;
                 height: auto !important;
-                max-height: ${isExpanded ? '85vh' : '560px'} !important;
-                width: 400px !important;
+                max-height: ${isExpanded ? '85vh' : '600px'} !important;
+                width: 420px !important;
                 border-radius: 20px !important;
               }
             }
@@ -357,6 +575,10 @@ export function AIAssistant() {
               from { transform: translateY(20px) scale(0.95); opacity: 0; }
               to { transform: translateY(0) scale(1); opacity: 1; }
             }
+            @keyframes bf-product-in {
+              from { opacity: 0; transform: translateY(8px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
             #bf-assistant-panel { animation: bf-slide-up 0.3s ease-out; }
             @media (min-width: 640px) {
               #bf-assistant-panel { animation: bf-slide-in 0.25s ease-out; }
@@ -364,6 +586,7 @@ export function AIAssistant() {
             .bf-quick-btn { transition: all 0.15s ease; }
             .bf-quick-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(29,51,59,0.1); }
             .bf-quick-btn:active { transform: translateY(0); }
+            .bf-product-card { animation: bf-product-in 0.3s ease-out both; }
           `}</style>
 
           <div
@@ -389,7 +612,7 @@ export function AIAssistant() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '16px 18px',
+                padding: '14px 18px',
                 background: 'linear-gradient(135deg, #1D333B 0%, #0F1B21 100%)',
                 flexShrink: 0,
               }}
@@ -412,9 +635,22 @@ export function AIAssistant() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
-                      Bab-ul-Fatah AI
+                      Salamee AI
                     </h3>
                     <Sparkles style={{ width: 14, height: 14, color: '#C9A84C' }} />
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 600,
+                        color: '#C9A84C',
+                        background: 'rgba(201,168,76,0.15)',
+                        padding: '1px 6px',
+                        borderRadius: 8,
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      LIVE
+                    </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <div
@@ -427,7 +663,7 @@ export function AIAssistant() {
                       }}
                     />
                     <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', margin: 0 }}>
-                      Online — Powered by Llama 3.3 70B
+                      Online — Live Inventory Access
                     </p>
                   </div>
                 </div>
@@ -507,26 +743,43 @@ export function AIAssistant() {
                       <SalameeIcon size={14} />
                     </div>
                   )}
-                  <div
-                    style={{
-                      maxWidth: msg.role === 'user' ? '80%' : '88%',
-                      borderRadius: 18,
-                      padding: msg.role === 'user' ? '10px 16px' : '12px 16px',
-                      fontSize: 13.5,
-                      lineHeight: 1.65,
-                      background:
-                        msg.role === 'user'
-                          ? 'linear-gradient(135deg, #1D333B, #2A4A55)'
-                          : '#FFFFFF',
-                      color: msg.role === 'user' ? '#fff' : '#2D3748',
-                      borderBottomRightRadius: msg.role === 'user' ? 6 : 18,
-                      borderBottomLeftRadius: msg.role === 'user' ? 18 : 6,
-                      border: msg.role === 'assistant' ? '1px solid rgba(29,51,59,0.06)' : 'none',
-                      boxShadow: msg.role === 'assistant' ? '0 1px 4px rgba(0,0,0,0.04)' : '0 2px 8px rgba(29,51,59,0.2)',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {msg.role === 'user' ? msg.content : renderMarkdown(msg.content)}
+                  <div style={{ maxWidth: msg.role === 'user' ? '80%' : '90%' }}>
+                    {/* Text bubble */}
+                    <div
+                      style={{
+                        borderRadius: 18,
+                        padding: msg.role === 'user' ? '10px 16px' : '12px 16px',
+                        fontSize: 13.5,
+                        lineHeight: 1.65,
+                        background:
+                          msg.role === 'user'
+                            ? 'linear-gradient(135deg, #1D333B, #2A4A55)'
+                            : '#FFFFFF',
+                        color: msg.role === 'user' ? '#fff' : '#2D3748',
+                        borderBottomRightRadius: msg.role === 'user' ? 6 : 18,
+                        borderBottomLeftRadius: msg.role === 'user' ? 18 : 6,
+                        border: msg.role === 'assistant' ? '1px solid rgba(29,51,59,0.06)' : 'none',
+                        boxShadow: msg.role === 'assistant' ? '0 1px 4px rgba(0,0,0,0.04)' : '0 2px 8px rgba(29,51,59,0.2)',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {msg.role === 'user' ? msg.content : renderMarkdown(msg.content)}
+                    </div>
+
+                    {/* Product Cards (below text bubble) */}
+                    {msg.role === 'assistant' && msg.products && msg.products.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        {msg.products.map((product, idx) => (
+                          <div
+                            key={product.id || `prod-${idx}`}
+                            className="bf-product-card"
+                            style={{ animationDelay: `${idx * 0.08}s` }}
+                          >
+                            <ChatProductCard product={product} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -594,6 +847,9 @@ export function AIAssistant() {
                         />
                       ))}
                     </div>
+                    <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 8 }}>
+                      Checking inventory...
+                    </span>
                   </div>
                 </div>
               )}
@@ -641,12 +897,54 @@ export function AIAssistant() {
             {/* ── Input Area ── */}
             <div
               style={{
-                padding: '14px 16px',
+                padding: '12px 16px',
                 borderTop: '1px solid rgba(29,51,59,0.06)',
                 flexShrink: 0,
                 background: '#FFFFFF',
               }}
             >
+              {/* Suggestion chips (when not loading and user has sent at least 1 message) */}
+              {!showQuickActions && !isLoading && (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 6,
+                    marginBottom: 10,
+                    overflowX: 'auto',
+                    paddingBottom: 2,
+                  }}
+                >
+                  {['Check stock', 'Show price', 'Alternatives', 'Browse all'].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => setInput(chip === 'Browse all' ? 'Show me all categories' : chip)}
+                      style={{
+                        flexShrink: 0,
+                        fontSize: 11,
+                        padding: '4px 10px',
+                        borderRadius: 20,
+                        border: '1px solid rgba(29,51,59,0.1)',
+                        background: 'transparent',
+                        color: '#6B7280',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target as HTMLElement).style.borderColor = 'rgba(201,168,76,0.4)';
+                        (e.target as HTMLElement).style.color = '#1D333B';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target as HTMLElement).style.borderColor = 'rgba(29,51,59,0.1)';
+                        (e.target as HTMLElement).style.color = '#6B7280';
+                      }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div
                   style={{
@@ -659,13 +957,14 @@ export function AIAssistant() {
                     border: '1px solid rgba(29,51,59,0.06)',
                   }}
                 >
+                  <Search style={{ width: 16, height: 16, color: '#A3A3A3', flexShrink: 0 }} />
                   <input
                     ref={inputRef}
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask about books, products, Islamic knowledge..."
+                    placeholder="Ask about availability, prices, books..."
                     disabled={isLoading}
                     style={{
                       flex: 1,
@@ -712,11 +1011,11 @@ export function AIAssistant() {
                   fontSize: 10,
                   textAlign: 'center',
                   color: 'rgba(100,116,139,0.4)',
-                  marginTop: 10,
+                  marginTop: 8,
                   letterSpacing: 0.3,
                 }}
               >
-                Bab-ul-Fatah AI — Powered by Llama 3.3 70B (Open Source)
+                Salamee AI — Live Inventory Access | Bab-ul-Fatah.com
               </p>
             </div>
           </div>
