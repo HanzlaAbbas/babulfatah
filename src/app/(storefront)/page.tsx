@@ -1,10 +1,18 @@
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
-import { HeroSlider } from '@/components/storefront/hero-slider';
+import { HeroCinematic } from '@/components/storefront/hero-cinematic';
+import { TrustMarquee } from '@/components/storefront/trust-marquee';
 import { BenefitsBar } from '@/components/storefront/benefits-bar';
+import { CategoryShowcase } from '@/components/storefront/category-showcase';
+import { BestsellerShowcase } from '@/components/storefront/bestseller-showcase';
+import { DealsStrip } from '@/components/storefront/deals-strip';
 import { CategoryProductRow } from '@/components/storefront/category-product-row';
+import { TestimonialsSection } from '@/components/storefront/testimonials-section';
+import { CtaBanner } from '@/components/storefront/cta-banner';
 import { TrustBanner } from '@/components/storefront/trust-banner';
 import { MobileStickyBar } from '@/components/storefront/mobile-sticky-bar';
+
+// Force dynamic rendering — always fetch fresh data from DB (never cache stale homepage)
+export const dynamic = 'force-dynamic';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,10 +43,6 @@ interface HomepageCategory {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Collect ALL descendant category IDs from a tree node (in-memory).
- * Walks children recursively — works regardless of tree depth (2, 3, or more levels).
- */
 function collectAllIds(node: CategoryNode): string[] {
   const ids = [node.id];
   for (const child of node.children) {
@@ -47,10 +51,6 @@ function collectAllIds(node: CategoryNode): string[] {
   return ids;
 }
 
-/**
- * Count ALL products in a category subtree (in-memory).
- * Sums direct products + all descendants' products.
- */
 function countSubtreeProducts(node: CategoryNode, productCountMap: Map<string, number>): number {
   let count = productCountMap.get(node.id) || 0;
   for (const child of node.children) {
@@ -59,20 +59,14 @@ function countSubtreeProducts(node: CategoryNode, productCountMap: Map<string, n
   return count;
 }
 
-/**
- * Build a tree from a flat list of categories (parentId-based).
- * Returns only root nodes (parentId === null).
- */
 function buildTree(categories: { id: string; name: string; slug: string; parentId: string | null }[]): CategoryNode[] {
   const nodeMap = new Map<string, CategoryNode>();
   const roots: CategoryNode[] = [];
 
-  // Create all nodes first
   for (const cat of categories) {
     nodeMap.set(cat.id, { id: cat.id, name: cat.name, slug: cat.slug, parentId: cat.parentId, children: [] });
   }
 
-  // Attach children to parents
   for (const node of nodeMap.values()) {
     if (node.parentId && nodeMap.has(node.parentId)) {
       nodeMap.get(node.parentId)!.children.push(node);
@@ -85,76 +79,92 @@ function buildTree(categories: { id: string; name: string; slug: string; parentI
 }
 
 // ─── Homepage Server Component ────────────────────────────────────────────────
-// Data strategy (ZERO raw SQL — pure Prisma, maximum compatibility):
-//   1. Fetch ALL categories flat (single query) → build tree in-memory
-//   2. Count products per category (single Prisma groupBy query)
-//   3. Rank root categories by total subtree product count
-//   4. Take top 6 → for each, collect ALL descendant IDs → fetch 8 products
-//   5. Fallback: if anything fails, show a friendly message (never white page)
 
 export default async function HomePage() {
   let categories: HomepageCategory[] = [];
+  let bestsellers: HomepageCategory['products'] = [];
   let totalProducts = 0;
   let fetchError = false;
+  let errorMessage = '';
 
   try {
-    // ════════════════════════════════════════════════════════════════════
-    //  STEP 1: Fetch all categories (flat) + product count per category
-    // ════════════════════════════════════════════════════════════════════
-
-    const [allCategories, productCountByCategory, total] = await Promise.all([
-      // All categories — flat list
-      db.category.findMany({
+    // STEP 1: Fetch all categories + product counts + total — each query individually resilient
+    const allCategories = await db.category
+      .findMany({
         select: { id: true, name: true, slug: true, parentId: true },
         orderBy: { name: 'asc' },
-      }),
-      // Product count per category (direct children only — we'll sum in-memory)
-      db.product.groupBy({
+      })
+      .catch((e) => {
+        console.error('[Homepage] category.findMany failed:', e.message);
+        return [] as { id: string; name: string; slug: string; parentId: string | null }[];
+      });
+
+    const productCountByCategory = await db.product
+      .groupBy({
         by: ['categoryId'],
         _count: { id: true },
-      }),
-      // Total products
-      db.product.count(),
-    ]);
+      })
+      .catch((e) => {
+        console.error('[Homepage] product.groupBy failed:', e.message);
+        return [] as { categoryId: string; _count: { id: number } }[];
+      });
+
+    const total = await db.product
+      .count()
+      .catch((e) => {
+        console.error('[Homepage] product.count failed:', e.message);
+        return 0;
+      });
 
     totalProducts = total;
 
-    // Build a map: categoryId → product count
+    if (allCategories.length === 0) {
+      fetchError = true;
+      errorMessage = 'No categories found in database. Check DATABASE_URL in .env';
+      console.error('[Homepage]', errorMessage);
+    }
+
+    // Build product count map
     const productCountMap = new Map<string, number>();
     for (const row of productCountByCategory) {
       productCountMap.set(row.categoryId, row._count.id);
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    //  STEP 2: Build category tree in-memory
-    // ════════════════════════════════════════════════════════════════════
-
+    // STEP 2: Build category tree in-memory
     const rootCategories = buildTree(allCategories);
 
-    // ════════════════════════════════════════════════════════════════════
-    //  STEP 3: Rank root categories by total subtree product count
-    // ════════════════════════════════════════════════════════════════════
-
+    // STEP 3: Rank root categories by total subtree product count
     const rootWithCounts = rootCategories
       .map((root) => ({
         root,
         totalProducts: countSubtreeProducts(root, productCountMap),
       }))
       .filter((r) => r.totalProducts > 0)
-      .sort((a, b) => b.totalProducts - a.totalProducts)
-      .slice(0, 6);
+      .sort((a, b) => b.totalProducts - a.totalProducts);
 
-    if (rootWithCounts.length > 0) {
-      // ════════════════════════════════════════════════════════════════════
-      //  STEP 4: Fetch up to 8 products per top category (parallel)
-      // ════════════════════════════════════════════════════════════════════
+    // STEP 4: Fetch bestsellers (highest stock = bestsellers heuristic) in parallel
+    const bestsellerPromise = db.product.findMany({
+      where: { stock: { gt: 0 } },
+      take: 12,
+      orderBy: [{ stock: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        images: { take: 1, orderBy: { order: 'asc' } },
+        author: true,
+        category: true,
+      },
+    }).catch((e) => {
+      console.error('[Homepage] bestsellers fetch failed:', e.message);
+      return [];
+    });
 
-      categories = await Promise.all(
-        rootWithCounts.map(async ({ root, totalProducts: count }) => {
+    const topCategories = rootWithCounts.slice(0, 5);
+
+    if (topCategories.length > 0) {
+      // STEP 5: Fetch up to 8 products per top category (parallel, each individually resilient)
+      const categoryProducts = await Promise.all(
+        topCategories.map(async ({ root, totalProducts: count }) => {
           try {
-            // Collect ALL descendant IDs from tree (handles 2, 3, N levels deep)
             const allIds = collectAllIds(root);
-
             const products = await db.product.findMany({
               where: { categoryId: { in: allIds } },
               take: 8,
@@ -165,7 +175,6 @@ export default async function HomePage() {
                 category: true,
               },
             });
-
             return {
               title: root.name,
               subtitle: `${count} books available`,
@@ -186,7 +195,8 @@ export default async function HomePage() {
                 author: p.author ? { id: p.author.id, name: p.author.name } : null,
               })),
             } satisfies HomepageCategory;
-          } catch {
+          } catch (e) {
+            console.error(`[Homepage] Failed to fetch products for ${root.name}:`, e instanceof Error ? e.message : e);
             return {
               title: root.name,
               subtitle: '',
@@ -196,10 +206,31 @@ export default async function HomePage() {
           }
         })
       );
+
+      categories = categoryProducts;
     }
+
+    // Await bestsellers
+    const bestsellerData = await bestsellerPromise;
+    bestsellers = bestsellerData.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      stock: p.stock,
+      language: p.language as string,
+      images: p.images.map((img) => ({
+        id: img.id,
+        url: img.url,
+        altText: img.altText,
+      })),
+      category: { id: p.category.id, name: p.category.name },
+      author: p.author ? { id: p.author.id, name: p.author.name } : null,
+    }));
   } catch (error) {
-    console.error('[Homepage] Data fetch error:', error);
+    console.error('[Homepage] Unexpected error:', error instanceof Error ? error.message : error);
     fetchError = true;
+    errorMessage = error instanceof Error ? error.message : 'Unknown error';
   }
 
   // ── JSON-LD Structured Data ──
@@ -281,34 +312,59 @@ export default async function HomePage() {
       />
 
       {/* ═══════════════════════════════════════════════════════════
-          1. Hero Slider
+          1. HERO CINEMATIC — Full viewport, crossfade, Ken Burns,
+             Bismillah, gold shimmer, search, counters, trust badges
          ═══════════════════════════════════════════════════════════ */}
-      <HeroSlider />
+      <HeroCinematic />
 
       {/* ═══════════════════════════════════════════════════════════
-          2. Benefits / Features Bar
+          2. TRUST MARQUEE — Infinite scrolling trust signals
+         ═══════════════════════════════════════════════════════════ */}
+      <TrustMarquee />
+
+      {/* ═══════════════════════════════════════════════════════════
+          3. BENEFITS BAR — COD, Free Delivery, Authentic, WhatsApp
+             + Pakistani payment methods strip
          ═══════════════════════════════════════════════════════════ */}
       <BenefitsBar />
 
       {/* ═══════════════════════════════════════════════════════════
-          3. Category Product Rows — horizontal scrollable
-          Dynamically populated from top 6 categories by product count.
-          Uses in-memory tree traversal (zero raw SQL) for maximum
-          database compatibility.
+          4. CATEGORY SHOWCASE — Magazine-style asymmetric grid
+             (NO competitor has this level of visual category nav)
+         ═══════════════════════════════════════════════════════════ */}
+      <CategoryShowcase />
+
+      {/* ═══════════════════════════════════════════════════════════
+          5. BESTSELLERS SHOWCASE — "Trending Now" with fire badge
+             Social proof + urgency — drives conversions
+         ═══════════════════════════════════════════════════════════ */}
+      {bestsellers.length > 0 && <BestsellerShowcase products={bestsellers} />}
+
+      {/* ═══════════════════════════════════════════════════════════
+          6. DEALS STRIP — "Today's Special" dark section
+             Reuses bestseller data with deal cards
+         ═══════════════════════════════════════════════════════════ */}
+      {bestsellers.length > 0 && <DealsStrip products={bestsellers.slice(0, 10)} />}
+
+      {/* ═══════════════════════════════════════════════════════════
+          7. CATEGORY PRODUCT ROWS — horizontal scrollable
+          Dynamically populated from top 5 categories by product count.
          ═══════════════════════════════════════════════════════════ */}
       {categories.length > 0 ? (
-        categories.map(
-          (cat) =>
-            cat.products.length > 0 && (
-              <CategoryProductRow
-                key={cat.categorySlug}
-                title={cat.title}
-                subtitle={cat.subtitle}
-                categorySlug={cat.categorySlug}
-                products={cat.products}
-              />
-            )
-        )
+        <div>
+          {categories.map(
+            (cat) =>
+              cat.products.length > 0 && (
+                <CategoryProductRow
+                  key={cat.categorySlug}
+                  title={cat.title}
+                  subtitle={cat.subtitle}
+                  categorySlug={cat.categorySlug}
+                  products={cat.products}
+                />
+              )
+          )}
+        </div>
       ) : (
         /* Fallback: database unreachable or unexpected error */
         <section className="py-20 text-center">
@@ -324,28 +380,33 @@ export default async function HomePage() {
                   ? `Loading ${totalProducts.toLocaleString()} products — please refresh the page.`
                   : 'Our collection is being prepared. Please check back shortly!'}
             </p>
+            {errorMessage && process.env.NODE_ENV === 'development' && (
+              <p className="text-xs text-red-400 mt-4 font-mono break-all max-w-lg mx-auto">
+                Debug: {errorMessage}
+              </p>
+            )}
           </div>
         </section>
       )}
 
       {/* ═══════════════════════════════════════════════════════════
-          4. Custom Features Wrapper — for user-injected components
+          8. TESTIMONIALS — WhatsApp-style customer reviews
          ═══════════════════════════════════════════════════════════ */}
-      <section
-        id="custom-features-wrapper"
-        className="py-12 w-full overflow-hidden"
-        aria-label="Custom features section"
-      >
-        {/* Empty — user will inject custom components here */}
-      </section>
+      <TestimonialsSection />
 
       {/* ═══════════════════════════════════════════════════════════
-          5. Trust Banner — 4-column feature strip
+          9. CTA BANNER — "Start Your Islamic Learning Journey"
+          Conversion-focused with golden CTA
+         ═══════════════════════════════════════════════════════════ */}
+      <CtaBanner />
+
+      {/* ═══════════════════════════════════════════════════════════
+          10. TRUST BANNER — 4-column feature strip
          ═══════════════════════════════════════════════════════════ */}
       <TrustBanner />
 
       {/* ═══════════════════════════════════════════════════════════
-          6. Mobile Sticky Bar — cart quick access (client component)
+          11. MOBILE STICKY BAR — cart quick access (client component)
          ═══════════════════════════════════════════════════════════ */}
       <MobileStickyBar />
     </>
