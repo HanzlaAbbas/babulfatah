@@ -209,6 +209,7 @@ function ProviderBadge({ provider }: { provider: string }) {
   const config: Record<string, { label: string; color: string }> = {
     groq: { label: 'Llama 3.3 70B', color: '#F97316' },
     gemini: { label: 'Gemini 2.0 Flash', color: '#3B82F6' },
+    catalog: { label: 'Live Inventory', color: '#22C55E' },
     'fallback-db': { label: 'Live Inventory', color: '#22C55E' },
     fallback: { label: 'Offline', color: '#9CA3AF' },
   };
