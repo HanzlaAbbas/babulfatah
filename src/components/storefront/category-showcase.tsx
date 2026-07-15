@@ -1,8 +1,10 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
+  ChevronRight,
   BookOpen,
   Sparkles,
   Star,
@@ -15,7 +17,6 @@ import {
   Plane,
   Landmark,
 } from 'lucide-react';
-import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,11 +24,8 @@ interface CategoryItem {
   name: string;
   slug: string;
   icon: React.ElementType;
-  gradient: string;
-  border: string;
   count: string;
   size: 'large' | 'medium' | 'small';
-  iconColor: string;
 }
 
 // ─── Category Data ────────────────────────────────────────────────────────────
@@ -37,195 +35,176 @@ const categories: CategoryItem[] = [
     name: 'Quran & Hadith',
     slug: 'quran',
     icon: BookOpen,
-    gradient: 'from-[#1D333B] to-[#2A4A55]',
-    border: '',
-    count: '180+ books',
+    count: '180+ Masterpieces',
     size: 'large',
-    iconColor: 'text-[#D4AF37]',
   },
   {
     name: "Children's Collection",
     slug: 'childrens-collection',
     icon: Sparkles,
-    gradient: 'from-amber-50 to-orange-50',
-    border: 'border border-amber-100',
-    count: '95+ books',
+    count: '95+ Illustrated Books',
     size: 'medium',
-    iconColor: 'text-amber-600',
   },
   {
     name: 'Tafseer & Explanation',
     slug: 'tafseer',
     icon: Star,
-    gradient: 'from-emerald-50 to-teal-50',
-    border: 'border border-emerald-100',
-    count: '65+ books',
+    count: '65+ Volumes',
     size: 'medium',
-    iconColor: 'text-emerald-600',
   },
   {
     name: 'Biography & Seerah',
     slug: 'seerah',
-    icon: BookOpen,
-    gradient: 'from-rose-50 to-pink-50',
-    border: 'border border-rose-100',
-    count: '130+ books',
+    icon: Library,
+    count: '130+ Biographies',
     size: 'medium',
-    iconColor: 'text-rose-600',
   },
   {
     name: "Women's Collection",
     slug: 'womens-collection',
     icon: Heart,
-    gradient: 'from-pink-50 to-fuchsia-50',
-    border: 'border border-pink-100',
-    count: '78+ books',
+    count: '78+ Curated Texts',
     size: 'medium',
-    iconColor: 'text-pink-600',
   },
   {
-    name: 'Goodword Books',
+    name: 'Goodword Excellence',
     slug: 'goodword',
     icon: Award,
-    gradient: 'from-amber-50 to-yellow-50',
-    border: 'border border-amber-100',
-    count: '120+ books',
+    count: '120+ Award-Winners',
     size: 'large',
-    iconColor: 'text-amber-700',
   },
   {
-    name: 'Islamic Products',
+    name: 'Premium Gifts',
     slug: 'islamic-products',
     icon: Gift,
-    gradient: 'from-green-50 to-emerald-50',
-    border: 'border border-green-100',
-    count: '45+ items',
+    count: '45+ Exquisite Items',
     size: 'small',
-    iconColor: 'text-green-600',
   },
   {
     name: 'Education & Fiqh',
     slug: 'education-fiqh',
     icon: GraduationCap,
-    gradient: 'from-blue-50 to-indigo-50',
-    border: 'border border-blue-100',
-    count: '175+ books',
+    count: '175+ Academic Texts',
     size: 'small',
-    iconColor: 'text-blue-600',
   },
   {
-    name: 'Prayer & Supplication',
+    name: 'Prayer & Dua',
     slug: 'prayer-supplication',
     icon: Moon,
-    gradient: 'from-violet-50 to-purple-50',
-    border: 'border border-violet-100',
-    count: '63+ books',
+    count: '63+ Spiritual Guides',
     size: 'small',
-    iconColor: 'text-violet-600',
   },
   {
     name: 'IIPH Publications',
     slug: 'iiph',
-    icon: Library,
-    gradient: 'from-slate-50 to-gray-100',
-    border: 'border border-slate-200',
-    count: '85+ books',
+    icon: Landmark,
+    count: '85+ Authentic Books',
     size: 'small',
-    iconColor: 'text-slate-600',
   },
   {
     name: 'Hajj & Umrah',
     slug: 'hajj-umrah',
     icon: Plane,
-    gradient: 'from-sky-50 to-cyan-50',
-    border: 'border border-sky-100',
-    count: '14+ books',
+    count: '14+ Travel Guides',
     size: 'small',
-    iconColor: 'text-sky-600',
   },
   {
     name: 'Pillars of Islam',
     slug: 'pillars-of-islam',
     icon: Landmark,
-    gradient: 'from-orange-50 to-amber-50',
-    border: 'border border-orange-100',
-    count: '25+ books',
+    count: '25+ Fundamental Texts',
     size: 'small',
-    iconColor: 'text-orange-600',
   },
 ];
+
+// ─── Animation Variants ────────────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function CategoryShowcase() {
-  const animRef = useScrollAnimation();
-
   return (
-    <section className="bg-surface py-10 md:py-14" ref={animRef}>
-      <div className="container mx-auto px-4 md:px-6">
+    <section className="bg-[#0B1518] py-24 md:py-32 relative overflow-hidden" aria-label="Curated Collections">
+      {/* Subtle Background Glows */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#D4AF37]/5 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#1D333B]/50 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
         {/* ── Section Header ── */}
-        <div className="flex items-end justify-between gap-4 mb-6 md:mb-8" data-animate>
-          <div>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1D333B]">
-              Explore Our Collections
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col md:flex-row items-end justify-between gap-6 mb-16"
+        >
+          <div className="max-w-2xl">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4">
+              Curated Collections
             </h2>
-            <div className="border-b-2 border-[#D4AF37] w-24 mt-3" />
-            <p className="text-sm text-muted-foreground mt-2 hidden md:block">
-              Browse our carefully curated Islamic book collections
+            <div className="border-b-2 border-[#D4AF37] w-20 mb-6" />
+            <p className="text-lg text-neutral-400 font-light leading-relaxed">
+              Explore our meticulously organized categories. Every book is selected to elevate your understanding and beautify your Islamic library.
             </p>
           </div>
           <Link
             href="/shop"
-            className="hidden md:flex items-center gap-1.5 text-sm font-semibold text-[#1D333B] hover:text-[#C9A84C] transition-colors duration-200 shrink-0"
+            className="hidden md:flex items-center gap-2 text-[#D4AF37] hover:text-white transition-colors duration-400 ease-out font-medium pb-1 border-b border-transparent hover:border-white"
           >
-            View All
-            <ChevronRight className="h-4 w-4" />
+            View Full Library
+            <ChevronRight className="h-5 w-5" />
           </Link>
-        </div>
+        </motion.div>
 
-        {/* ── Row 1: Large + 2 Medium ── */}
-        <div
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-3 md:mb-4"
-          data-animate-stagger
+        {/* ── Bento Grid ── */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
         >
-          {/* Large: Quran & Hadith */}
-          <CategoryCard category={categories[0]} />
-          {/* Medium: Children's */}
-          <CategoryCard category={categories[1]} />
-          {/* Medium: Tafseer */}
-          <CategoryCard category={categories[2]} />
-        </div>
+          {/* Row 1: Large + 2 Medium */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <CategoryCard category={categories[0]} />
+            <CategoryCard category={categories[1]} />
+            <CategoryCard category={categories[2]} />
+          </div>
 
-        {/* ── Row 2: 2 Medium + Large ── */}
-        <div
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-3 md:mb-4"
-          data-animate-stagger
-        >
-          {/* Medium: Seerah */}
-          <CategoryCard category={categories[3]} />
-          {/* Medium: Women's */}
-          <CategoryCard category={categories[4]} />
-          {/* Large: Goodword */}
-          <CategoryCard category={categories[5]} />
-        </div>
+          {/* Row 2: 2 Medium + Large */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 flex-col-reverse md:flex-row">
+            <CategoryCard category={categories[3]} />
+            <CategoryCard category={categories[4]} />
+            <CategoryCard category={categories[5]} />
+          </div>
 
-        {/* ── Row 3: 6 Small Cards ── */}
-        <div
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4"
-          data-animate-stagger
-        >
-          {categories.slice(6).map((cat) => (
-            <CategoryCard key={cat.slug} category={cat} />
-          ))}
-        </div>
+          {/* Row 3: 6 Small Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {categories.slice(6).map((cat) => (
+              <CategoryCard key={cat.slug} category={cat} />
+            ))}
+          </div>
+        </motion.div>
 
         {/* Mobile: View All */}
-        <div className="mt-5 text-center md:hidden" data-animate>
+        <div className="mt-12 text-center md:hidden">
           <Link
             href="/shop"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D333B] hover:text-[#C9A84C] transition-colors duration-200 min-h-[44px] px-4 justify-center"
+            className="inline-flex items-center justify-center gap-2 text-[#D4AF37] hover:text-white transition-colors duration-400 ease-out font-medium min-h-[44px] px-6 py-3 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/10"
           >
-            View All Categories
+            View Full Library
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -238,49 +217,47 @@ export function CategoryShowcase() {
 
 function CategoryCard({ category }: { category: CategoryItem }) {
   const isLarge = category.size === 'large';
-  const isDark = category.slug === 'quran';
   const Icon = category.icon;
 
   return (
-    <Link
-      href={`/shop?category=${category.slug}`}
-      className={`card-hover-lift shine-sweep rounded-xl bg-gradient-to-br ${category.gradient} ${category.border} p-4 md:p-5 flex flex-col justify-between group relative ${
-        isLarge ? 'md:col-span-2 md:row-span-2 min-h-[120px] md:min-h-[320px]' : 'min-h-[120px] md:min-h-[152px]'
-      }`}
-      data-animate
-    >
-      {/* Icon top-left */}
-      <div className="flex items-start justify-between">
-        <div
-          className={`w-9 h-9 md:w-11 md:h-11 rounded-lg flex items-center justify-center ${
-            isDark ? 'bg-white/10' : 'bg-white/80 shadow-sm'
-          }`}
-        >
-          <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isDark ? category.iconColor : category.iconColor}`} />
-        </div>
-        {/* Hover arrow */}
-        <ChevronRight
-          className={`h-4 w-4 md:h-5 md:w-5 transition-all duration-300 ${
-            isDark ? 'text-white/0 group-hover:text-white/60' : 'text-[#1D333B]/0 group-hover:text-[#1D333B]/40'
-          }`}
-        />
-      </div>
+    <motion.div variants={itemVariants} className={isLarge ? 'md:col-span-2' : ''}>
+      <Link
+        href={`/shop?category=${category.slug}`}
+        className={`group block relative w-full h-full bg-[#15262C] rounded-3xl border border-white/5 p-6 md:p-8 overflow-hidden transition-all duration-400 ease-out hover:border-[#D4AF37]/50 ${
+          isLarge ? 'min-h-[220px] md:min-h-[300px]' : 'min-h-[160px] md:min-h-[200px]'
+        }`}
+      >
+        {/* Inner Glow Hover Effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/0 via-[#D4AF37]/0 to-[#D4AF37]/0 group-hover:from-[#D4AF37]/10 group-hover:via-transparent group-hover:to-transparent transition-all duration-400 ease-out opacity-0 group-hover:opacity-100" />
+        
+        <div className="relative z-10 h-full flex flex-col justify-between">
+          {/* Icon Header */}
+          <div className="flex items-start justify-between">
+            <div className={`rounded-2xl flex items-center justify-center transition-transform duration-400 ease-out group-hover:scale-110 ${
+              isLarge ? 'w-16 h-16 bg-[#1D333B] shadow-inner' : 'w-12 h-12 bg-[#1D333B]'
+            }`}>
+              <Icon className={`${isLarge ? 'h-8 w-8' : 'h-6 w-6'} text-[#D4AF37]`} />
+            </div>
+            
+            {/* Arrow indicator */}
+            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-400 ease-out">
+              <ChevronRight className="h-5 w-5 text-white" />
+            </div>
+          </div>
 
-      {/* Bottom content */}
-      <div className="mt-auto pt-2">
-        <h3
-          className={`font-serif font-bold text-sm md:text-base leading-tight ${
-            isDark ? 'text-white' : 'text-[#1D333B]'
-          }`}
-        >
-          {category.name}
-        </h3>
-        <p
-          className={`text-xs mt-1 ${isDark ? 'text-white/60' : 'text-muted-foreground'}`}
-        >
-          {category.count}
-        </p>
-      </div>
-    </Link>
+          {/* Content Footer */}
+          <div className="mt-8">
+            <h3 className={`font-serif font-bold text-white leading-tight mb-2 transition-colors duration-400 ease-out group-hover:text-[#D4AF37] ${
+              isLarge ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'
+            }`}>
+              {category.name}
+            </h3>
+            <p className="text-sm text-neutral-400 font-medium tracking-wide">
+              {category.count}
+            </p>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }

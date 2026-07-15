@@ -312,103 +312,117 @@ export default async function HomePage() {
       />
 
       {/* ═══════════════════════════════════════════════════════════
-          1. HERO CINEMATIC — Full viewport, crossfade, Ken Burns,
-             Bismillah, gold shimmer, search, counters, trust badges
+          1. HERO CINEMATIC — Optimized for LCP with Suspense
          ═══════════════════════════════════════════════════════════ */}
-      <HeroCinematic />
+      <React.Suspense fallback={<div className="h-[100svh] w-full bg-[#1D333B] animate-pulse" />}>
+        <HeroCinematic />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          2. TRUST MARQUEE — Infinite scrolling trust signals
+          2. TRUST MARQUEE — Seamless Framer Motion Infinite Scroll
          ═══════════════════════════════════════════════════════════ */}
-      <TrustMarquee />
+      <React.Suspense fallback={<div className="h-[60px] w-full bg-[#15262C]" />}>
+        <TrustMarquee />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          3. BENEFITS BAR — COD, Free Delivery, Authentic, WhatsApp
-             + Pakistani payment methods strip
+          3. CATEGORY SHOWCASE — Bento Grid
          ═══════════════════════════════════════════════════════════ */}
-      <BenefitsBar />
+      <React.Suspense fallback={<div className="h-[500px] w-full bg-[#0B1518] animate-pulse" />}>
+        <CategoryShowcase />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          4. CATEGORY SHOWCASE — Magazine-style asymmetric grid
-             (NO competitor has this level of visual category nav)
+          4. BESTSELLERS SHOWCASE — Embla Carousel
          ═══════════════════════════════════════════════════════════ */}
-      <CategoryShowcase />
+      <React.Suspense fallback={<div className="h-[500px] w-full bg-[#FAFAFA] animate-pulse" />}>
+        {bestsellers.length > 0 && <BestsellerShowcase products={bestsellers} />}
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          5. BESTSELLERS SHOWCASE — "Trending Now" with fire badge
-             Social proof + urgency — drives conversions
+          5. BENEFITS BAR
          ═══════════════════════════════════════════════════════════ */}
-      {bestsellers.length > 0 && <BestsellerShowcase products={bestsellers} />}
+      <React.Suspense fallback={<div className="h-[100px] w-full bg-white" />}>
+        <BenefitsBar />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          6. DEALS STRIP — "Today's Special" dark section
-             Reuses bestseller data with deal cards
+          6. DEALS STRIP 
          ═══════════════════════════════════════════════════════════ */}
-      {bestsellers.length > 0 && <DealsStrip products={bestsellers.slice(0, 10)} />}
+      <React.Suspense fallback={null}>
+        {bestsellers.length > 0 && <DealsStrip products={bestsellers.slice(0, 10)} />}
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          7. CATEGORY PRODUCT ROWS — horizontal scrollable
-          Dynamically populated from top 5 categories by product count.
+          7. CATEGORY PRODUCT ROWS
          ═══════════════════════════════════════════════════════════ */}
-      {categories.length > 0 ? (
-        <div>
-          {categories.map(
-            (cat) =>
-              cat.products.length > 0 && (
-                <CategoryProductRow
-                  key={cat.categorySlug}
-                  title={cat.title}
-                  subtitle={cat.subtitle}
-                  categorySlug={cat.categorySlug}
-                  products={cat.products}
-                />
-              )
-          )}
-        </div>
-      ) : (
-        /* Fallback: database unreachable or unexpected error */
-        <section className="py-20 text-center">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-serif font-bold text-[#1D333B] mb-3">
-              Welcome to Bab-ul-Fatah
-            </h2>
-            <div className="border-b-2 border-[#D4AF37] w-24 mx-auto mb-4" />
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {fetchError
-                ? 'Unable to connect to the store database. Please try again in a moment.'
-                : totalProducts > 0
-                  ? `Loading ${totalProducts.toLocaleString()} products — please refresh the page.`
-                  : 'Our collection is being prepared. Please check back shortly!'}
-            </p>
-            {errorMessage && process.env.NODE_ENV === 'development' && (
-              <p className="text-xs text-red-400 mt-4 font-mono break-all max-w-lg mx-auto">
-                Debug: {errorMessage}
-              </p>
+      <React.Suspense fallback={<div className="h-[400px] w-full bg-white" />}>
+        {categories.length > 0 ? (
+          <div>
+            {categories.map(
+              (cat) =>
+                cat.products.length > 0 && (
+                  <CategoryProductRow
+                    key={cat.categorySlug}
+                    title={cat.title}
+                    subtitle={cat.subtitle}
+                    categorySlug={cat.categorySlug}
+                    products={cat.products}
+                  />
+                )
             )}
           </div>
-        </section>
-      )}
+        ) : (
+          <section className="py-32 text-center bg-[#FAFAFA]">
+            <div className="container mx-auto px-4">
+              <h2 className="text-3xl font-serif font-bold text-[#1D333B] mb-4">
+                Welcome to BabulFatah
+              </h2>
+              <div className="border-b-2 border-[#D4AF37] w-24 mx-auto mb-6" />
+              <p className="text-neutral-500 max-w-md mx-auto text-lg">
+                {fetchError
+                  ? 'Unable to connect to the store database. Please try again in a moment.'
+                  : totalProducts > 0
+                    ? `Loading ${totalProducts.toLocaleString()} products — please refresh the page.`
+                    : 'Our collection is being prepared. Please check back shortly!'}
+              </p>
+              {errorMessage && process.env.NODE_ENV === 'development' && (
+                <p className="text-xs text-red-400 mt-6 font-mono break-all max-w-lg mx-auto bg-red-50 p-4 rounded-lg">
+                  Debug: {errorMessage}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          8. TESTIMONIALS — WhatsApp-style customer reviews
+          8. TESTIMONIALS
          ═══════════════════════════════════════════════════════════ */}
-      <TestimonialsSection />
+      <React.Suspense fallback={null}>
+        <TestimonialsSection />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          9. CTA BANNER — "Start Your Islamic Learning Journey"
-          Conversion-focused with golden CTA
+          9. CTA BANNER
          ═══════════════════════════════════════════════════════════ */}
-      <CtaBanner />
+      <React.Suspense fallback={null}>
+        <CtaBanner />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          10. TRUST BANNER — 4-column feature strip
+          10. TRUST BANNER
          ═══════════════════════════════════════════════════════════ */}
-      <TrustBanner />
+      <React.Suspense fallback={null}>
+        <TrustBanner />
+      </React.Suspense>
 
       {/* ═══════════════════════════════════════════════════════════
-          11. MOBILE STICKY BAR — cart quick access (client component)
+          11. MOBILE STICKY BAR
          ═══════════════════════════════════════════════════════════ */}
-      <MobileStickyBar />
+      <React.Suspense fallback={null}>
+        <MobileStickyBar />
+      </React.Suspense>
     </>
   );
 }
