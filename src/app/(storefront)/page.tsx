@@ -1,3 +1,4 @@
+import React from 'react';
 import { db } from '@/lib/db';
 import { HeroCinematic } from '@/components/storefront/hero-cinematic';
 import { TrustMarquee } from '@/components/storefront/trust-marquee';
