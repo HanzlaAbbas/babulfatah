@@ -81,8 +81,14 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${inter.variable} ${geistMono.variable} font-sans antialiased bg-[#0A1114] text-neutral-200 min-h-screen relative`}
       >
+        {/* ── Global Ambient Lighting ── */}
+        <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+          <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vh] bg-[#1D333B]/30 blur-[150px] rounded-full mix-blend-screen" />
+          <div className="absolute bottom-[-20%] left-[-10%] w-[80vw] h-[80vh] bg-[#D4AF37]/5 blur-[150px] rounded-full mix-blend-screen" />
+        </div>
+        
         {children}
         <Toaster />
       </body>

@@ -129,47 +129,42 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function CategoryShowcase() {
   return (
-    <section className="bg-[#0B1518] py-24 md:py-32 relative overflow-hidden" aria-label="Curated Collections">
-      {/* Subtle Background Glows */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#D4AF37]/5 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#1D333B]/50 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="relative py-32 md:py-48 z-10" aria-label="Curated Collections">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         
         {/* ── Section Header ── */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col md:flex-row items-end justify-between gap-6 mb-16"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col md:flex-row items-end justify-between gap-6 mb-20"
         >
           <div className="max-w-2xl">
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="font-serif text-5xl md:text-6xl font-normal text-white mb-6 tracking-tight">
               Curated Collections
             </h2>
-            <div className="border-b-2 border-[#D4AF37] w-20 mb-6" />
-            <p className="text-lg text-neutral-400 font-light leading-relaxed">
-              Explore our meticulously organized categories. Every book is selected to elevate your understanding and beautify your Islamic library.
+            <p className="text-lg text-neutral-400 font-light leading-relaxed max-w-xl">
+              Immerse yourself in our meticulously organized library. Every category is a gateway to profound Islamic heritage.
             </p>
           </div>
           <Link
             href="/shop"
-            className="hidden md:flex items-center gap-2 text-[#D4AF37] hover:text-white transition-colors duration-400 ease-out font-medium pb-1 border-b border-transparent hover:border-white"
+            className="hidden md:flex items-center gap-3 text-sm uppercase tracking-[0.2em] text-neutral-400 hover:text-white transition-colors duration-500 ease-out font-medium pb-2 border-b border-white/10 hover:border-white"
           >
             View Full Library
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </Link>
         </motion.div>
 
-        {/* ── Bento Grid ── */}
+        {/* ── Frosted Bento Grid ── */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -199,10 +194,10 @@ export function CategoryShowcase() {
         </motion.div>
 
         {/* Mobile: View All */}
-        <div className="mt-12 text-center md:hidden">
+        <div className="mt-16 text-center md:hidden">
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center gap-2 text-[#D4AF37] hover:text-white transition-colors duration-400 ease-out font-medium min-h-[44px] px-6 py-3 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/10"
+            className="inline-flex items-center justify-center gap-3 text-xs uppercase tracking-[0.2em] text-white transition-colors duration-500 ease-out font-medium min-h-[48px] px-8 rounded-full border border-white/20 bg-white/5 backdrop-blur-md"
           >
             View Full Library
             <ChevronRight className="h-4 w-4" />
@@ -223,36 +218,33 @@ function CategoryCard({ category }: { category: CategoryItem }) {
     <motion.div variants={itemVariants} className={isLarge ? 'md:col-span-2' : ''}>
       <Link
         href={`/shop?category=${category.slug}`}
-        className={`group block relative w-full h-full bg-[#15262C] rounded-3xl border border-white/5 p-6 md:p-8 overflow-hidden transition-all duration-400 ease-out hover:border-[#D4AF37]/50 ${
-          isLarge ? 'min-h-[220px] md:min-h-[300px]' : 'min-h-[160px] md:min-h-[200px]'
+        className={`group block relative w-full h-full bg-white/[0.02] backdrop-blur-2xl rounded-3xl border border-white/[0.05] p-8 md:p-10 overflow-hidden transition-all duration-500 ease-out hover:bg-white/[0.04] hover:border-white/20 ${
+          isLarge ? 'min-h-[280px] md:min-h-[340px]' : 'min-h-[200px] md:min-h-[240px]'
         }`}
       >
-        {/* Inner Glow Hover Effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/0 via-[#D4AF37]/0 to-[#D4AF37]/0 group-hover:from-[#D4AF37]/10 group-hover:via-transparent group-hover:to-transparent transition-all duration-400 ease-out opacity-0 group-hover:opacity-100" />
-        
         <div className="relative z-10 h-full flex flex-col justify-between">
           {/* Icon Header */}
           <div className="flex items-start justify-between">
-            <div className={`rounded-2xl flex items-center justify-center transition-transform duration-400 ease-out group-hover:scale-110 ${
-              isLarge ? 'w-16 h-16 bg-[#1D333B] shadow-inner' : 'w-12 h-12 bg-[#1D333B]'
+            <div className={`rounded-2xl flex items-center justify-center transition-transform duration-500 ease-out group-hover:scale-110 ${
+              isLarge ? 'w-16 h-16 bg-white/5 border border-white/10' : 'w-12 h-12 bg-transparent'
             }`}>
-              <Icon className={`${isLarge ? 'h-8 w-8' : 'h-6 w-6'} text-[#D4AF37]`} />
+              <Icon className={`${isLarge ? 'h-8 w-8 text-white' : 'h-6 w-6 text-neutral-400 group-hover:text-white transition-colors duration-500'}`} strokeWidth={1.5} />
             </div>
             
             {/* Arrow indicator */}
-            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-400 ease-out">
-              <ChevronRight className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ease-out border border-white/20 bg-white/5">
+              <ChevronRight className="h-4 w-4 text-white" />
             </div>
           </div>
 
           {/* Content Footer */}
-          <div className="mt-8">
-            <h3 className={`font-serif font-bold text-white leading-tight mb-2 transition-colors duration-400 ease-out group-hover:text-[#D4AF37] ${
-              isLarge ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl'
+          <div className="mt-12">
+            <h3 className={`font-serif font-normal text-white leading-tight mb-3 transition-colors duration-500 ease-out group-hover:text-[#D4AF37] ${
+              isLarge ? 'text-3xl md:text-4xl' : 'text-xl md:text-2xl'
             }`}>
               {category.name}
             </h3>
-            <p className="text-sm text-neutral-400 font-medium tracking-wide">
+            <p className="text-xs text-neutral-500 uppercase tracking-[0.15em] font-medium group-hover:text-neutral-400 transition-colors duration-500">
               {category.count}
             </p>
           </div>
